@@ -35,7 +35,7 @@ int Canvas::save_to_ppm(char *fn) {
     return 0;
 }
 
-__global__ void render_kernel(int *values, int width, int height, int channels, int color[3]) {
+__global__ void render_kernel(int *values, int width, int height, int channels, Vector<int> *color) {
     // Kernel row and column based on their thread and block indices
     int x = (threadIdx.x + blockIdx.x * blockDim.x) - (width / 2);
     int y = (threadIdx.y + blockIdx.y * blockDim.y) - (height / 2);
@@ -47,9 +47,21 @@ __global__ void render_kernel(int *values, int width, int height, int channels, 
         return;
     }
 
-    values[index] = color[color_index];
+    int new_value;
+    switch(color_index) {
+        case 0:
+            new_value = color->x;
+            break;
+        case 1:
+            new_value = color->y;
+            break;
+        case 2:
+            new_value = color->z;
+            break;
+    }
+    values[index] = new_value; //color[color_index];
 }
 
-void Canvas::render(dim3 grid_size, dim3 block_size, int color[3]) {
+void Canvas::render(dim3 grid_size, dim3 block_size, Vector<int> *color) {
     render_kernel<<<grid_size, block_size>>>(this->canvas, this->width, this->height, this->channels, color);
 }

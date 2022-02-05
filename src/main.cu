@@ -8,8 +8,10 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "cuda_utils.cuh"
 #include "utils.cuh"
 #include "canvas.cuh"
+#include "vector.cuh"
 
 #define BLOCK_SIZE 16
 
@@ -44,9 +46,9 @@ int main(int argc, char *argv[]) {
     canvas->init(width, height, channels);
 
     // Our array of color values (0 - 255) of shape [R, G, B]
-    int *color;
+    Vector<int> *color;
     cudaMallocManaged(&color, sizeof(int) * 3);
-    hex_str_to_color_arr(color, "FF00FF");
+    hex_str_to_color_vec(color, "0000FF");
 
     // Initialize our canvas on the GPU
     canvas->render(grid_size, block_size, color);

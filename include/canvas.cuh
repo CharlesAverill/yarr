@@ -8,22 +8,22 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
-#ifdef __CUDACC__
-#define __hd__ __host__ __device__
-#else
-#define __hd__
-#endif
-
 #include <stdio.h>
 
+#include "cuda_utils.cuh"
+#include "vector.cuh"
+
 class Canvas {
-public:
+private:
+	// Dimensions of our image
 	int width;
 	int height;
 	int channels;
 
+	// Array containing our image RGB values
 	int *canvas;
-
+public:
+	// Constructors
 	Canvas(int w, int h, int c) {
 		init(w, h, c);
 	}
@@ -36,10 +36,13 @@ public:
 		cudaMallocManaged(&canvas, width * height * channels * 4);
 	}
 
+	// Return size of canvas
 	int get_size();
+	// Save canvas to PPM file
 	int save_to_ppm(char *fn);
 
-	void render(dim3 grid_size, dim3 block_size, int color[3]);
+	// Run render pipeline on GPU
+	void render(dim3 grid_size, dim3 block_size, Vector<int> *color);
 };
 
 #endif
