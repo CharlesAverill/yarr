@@ -8,18 +8,38 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
+#ifdef __CUDACC__
+#define __hd__ __host__ __device__
+#else
+#define __hd__
+#endif
+
 #include <stdio.h>
 
-typedef struct canvas {
+class Canvas {
+public:
 	int width;
-    int height;
-    int channels;
+	int height;
+	int channels;
 
-    int *values;
-} canvas;
+	int *canvas;
 
-int canvas_size(canvas *c);
+	Canvas(int w, int h, int c) {
+		init(w, h, c);
+	}
 
-int canvas_to_ppm(canvas *c, char *fn);
+	void init(int w, int h, int c) {
+		width = w;
+		height = h;
+		channels = c;
+
+		cudaMallocManaged(&canvas, width * height * channels * 4);
+	}
+
+	int get_size();
+	int save_to_ppm(char *fn);
+
+	void render(dim3 grid_size, dim3 block_size, int color[3]);
+};
 
 #endif

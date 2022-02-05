@@ -23,8 +23,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
-void arr_to_ppm(canvas *c, char *fn);
-
 void hex_str_to_color_arr(int out[3], char in[6]);
 
 #endif
