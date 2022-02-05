@@ -32,28 +32,44 @@ public:
     }
 
     // Copy constructor
-    Vector(const Vector &other) {
+    __hd__ Vector(const Vector &other) {
         x = other.x;
         y = other.y;
         z = other.z;
     }
 
     // Getters
-    __hd__ float length() const;
+    __hd__ float length() const {
+        return sqrt((x * x) + (y * y) + (z * z));
+    }
 
     // Operator overloading
     // Addition
-    __hd__ Vector operator+(const Vector& other) const;
+    __hd__ Vector<T> operator+(const Vector& other) const {
+        return Vector(x + other.x, y + other.y, z + other.z);
+    }
     // Negation
-    __hd__ Vector operator-() const;
+    __hd__ Vector<T> operator-() const {
+        return (*this) * -1;
+    }
     // Scalar multiplication
-    __hd__ Vector operator*(T r) const;
+    __hd__ Vector<T> operator*(T r) const {
+        return Vector(x * r, y * r, z * r);
+    }
     // Dot product
-    __hd__ T operator%(const Vector& other) const;
+    __hd__ T operator%(const Vector& other) const {
+        return x * other.x + y * other.y + z * other.z;
+    }
     // Cross product
-    __hd__ Vector operator^(const Vector& other) const;
+    __hd__ Vector<T> operator^(const Vector& other) const {
+        return Vector((y * other.z) - (z * other.y),
+                      (z * other.x) - (x * other.z),
+                      (x * other.y) - (y * other.x));
+    }
     // Unit vector
-    __hd__ Vector operator!() const;
+    __hd__ Vector<T> operator!() const {
+        return (*this) * (1.0f / length());
+    }
 };
 
 #endif

@@ -15,6 +15,4 @@
 #include "canvas.cuh"
 #include "vector.cuh"
 
-void hex_str_to_color_vec(Vector<int> *out, char in[6]);
-
 #endif

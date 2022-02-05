@@ -38,20 +38,15 @@ int main(int argc, char *argv[]) {
 
     // Calculate our kernel dimensions
     dim3 block_size(BLOCK_SIZE, BLOCK_SIZE, 1);
-    dim3 grid_size(int(ceil(float(width) / float(BLOCK_SIZE))), int(ceil(float(height) / float(BLOCK_SIZE))), channels);
+    dim3 grid_size(int(ceil(float(width) / float(BLOCK_SIZE))), int(ceil(float(height) / float(BLOCK_SIZE))), 1);
 
     // Instantiate our Canvas object
     Canvas *canvas;
     cudaMallocManaged(&canvas, sizeof(Canvas));
     canvas->init(width, height, channels);
 
-    // Our array of color values (0 - 255) of shape [R, G, B]
-    Vector<int> *color;
-    cudaMallocManaged(&color, sizeof(int) * 3);
-    hex_str_to_color_vec(color, "0000FF");
-
     // Initialize our canvas on the GPU
-    canvas->render(grid_size, block_size, color);
+    canvas->render(grid_size, block_size);
 
     // Synchronize and check for errors
     gpuErrorCheck(cudaPeekAtLastError());
