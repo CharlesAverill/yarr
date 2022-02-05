@@ -13,7 +13,7 @@
 
 #define BLOCK_SIZE 16
 
-__global__ void init_canvas(canvas *c, int c_size) {
+__global__ void init_canvas(canvas *c, int c_size, int color[3]) {
     // Kernel row and column based on their thread and block indices
     int row = threadIdx.x + blockIdx.x * blockDim.x;
     int col = threadIdx.y + blockIdx.y * blockDim.y;
@@ -26,7 +26,7 @@ __global__ void init_canvas(canvas *c, int c_size) {
         return;
     }
 
-    c->values[index] = (z == 2) ? 255 : 0;
+    c->values[index] = color[z];
 }
 
 int main(int argc, char *argv[]) {
@@ -42,6 +42,11 @@ int main(int argc, char *argv[]) {
     int width = 512;
     int height = 512;
     int channels = 3;
+
+    // Our array of color values (0 - 255) of shape [R, G, B]
+    int *color;
+    cudaMallocManaged(&color, sizeof(int) * 3);
+    hex_str_to_color_arr(color, "FF00FF");
 
     // Initialize our canvas struct
     canvas *c;
@@ -65,7 +70,7 @@ int main(int argc, char *argv[]) {
     dim3 grid_size(int(ceil(float(width) / float(BLOCK_SIZE))), int(ceil(float(height) / float(BLOCK_SIZE))), channels);
 
     // Initialize our canvas on the GPU
-    init_canvas<<<grid_size, block_size>>>(c, canvas_size(c));
+    init_canvas<<<grid_size, block_size>>>(c, canvas_size(c), color);
 
     // Synchronize and check for errors
     gpuErrorCheck(cudaPeekAtLastError());

@@ -18,8 +18,8 @@ typedef struct canvas {
     int *values;
 } canvas;
 
-int canvas_to_ppm(canvas *c, char *fn);
-
 int canvas_size(canvas *c);
+
+int canvas_to_ppm(canvas *c, char *fn);
 
 #endif
