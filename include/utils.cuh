@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 
-#include "canvas.h"
+#include "canvas.cuh"
 
 #define gpuErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)

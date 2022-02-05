@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "utils.h"
-#include "canvas.h"
+#include "utils.cuh"
+#include "canvas.cuh"
 
 #define BLOCK_SIZE 16
 
@@ -64,8 +64,6 @@ int main(int argc, char *argv[]) {
     dim3 block_size(BLOCK_SIZE, BLOCK_SIZE, 1);
     dim3 grid_size(int(ceil(float(width) / float(BLOCK_SIZE))), int(ceil(float(height) / float(BLOCK_SIZE))), channels);
 
-    printf("%d %d %d\n%d %d %d\n", block_size.x, block_size.y, block_size.z, grid_size.x, grid_size.y, grid_size.z);
-
     // Initialize our canvas on the GPU
     init_canvas<<<grid_size, block_size>>>(c, canvas_size(c));
 
@@ -74,6 +72,7 @@ int main(int argc, char *argv[]) {
     gpuErrorCheck(cudaDeviceSynchronize());
 
     // Save canvas to PPM
+    printf("Saving render to %s\n", output_fn);
     canvas_to_ppm(c, output_fn);
 
     // Free memory

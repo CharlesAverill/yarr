@@ -5,7 +5,7 @@
  * @brief Description
 */
 
-#include "canvas.h"
+#include "canvas.cuh"
 
 int canvas_size(canvas *c) {
     return c->width * c->height * c->channels;
