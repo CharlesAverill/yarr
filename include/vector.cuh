@@ -53,8 +53,8 @@ public:
         return (*this) * -1;
     }
     // Scalar multiplication
-    __hd__ Vector<T> operator*(T r) const {
-        return Vector(x * r, y * r, z * r);
+    __hd__ Vector<T> operator*(float r) const {
+        return Vector(float(x) * r, float(y) * r, float(z) * r);
     }
     // Dot product
     __hd__ T operator%(const Vector& other) const {
