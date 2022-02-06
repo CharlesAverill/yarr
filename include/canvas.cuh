@@ -52,8 +52,8 @@ public:
 
 		cudaMallocManaged(&viewport_origin, sizeof(Vector<float>));
 
-		X->init(1, 0, 0);
-		Y->init(0, 1, 0);
+		X->init(0.002f, 0, 0);
+		Y->init(0, 0.002f, 0);
 		Z->init(0, 0, 1);
 
 		viewport_origin->init(0, 1, 0);
