@@ -43,11 +43,19 @@ __hd__ void Canvas::hex_int_to_color_vec(Vector<int> *out, int in) {
 
 __device__ void get_sky_color(Vector<int> *color, Vector<float> ray, Canvas *canvas) {
     canvas->hex_int_to_color_vec(color, 0xB399FF);
-    (*color) = (*color) * ray.y;
+    (*color) = (*color) * pow(1 - ray.y, 2);
 }
 
 __device__ void get_ground_color(Vector<int> *color, Vector<float> *ray_origin, Vector<float> ray, Canvas *canvas) {
-    canvas->hex_int_to_color_vec(color, 0xFF0000);
+    float distance = -1 * ray_origin->y / ray.y;
+    float x = ray_origin->x + distance * ray.x;
+    float z = ray_origin->z + distance * ray.z;
+
+    if((int)abs(floor(x)) % 2 == (int)abs(floor(z)) % 2) {
+        canvas->hex_int_to_color_vec(color, 0xFF0000);
+    } else {
+        canvas->hex_int_to_color_vec(color, 0xFFFFFF);
+    }
 }
 
 __global__ void render_kernel(Canvas *canvas) {
