@@ -130,8 +130,9 @@ void Canvas::render(dim3 grid_size, dim3 block_size) {
     init_triangle(red_triangle, Vector<float>(-0.25, 0.75, -1), Vector<float>(0.75, 0.75, -1), Vector<float>(0.25, 2, -1), Vector<int>(255, 0, 0));
     host_triangles.push_back(*red_triangle);
 
-    cudaMallocManaged(&(this->scene_triangles), sizeof(host_triangles));
-    cudaMemcpy(this->scene_triangles, thrust::raw_pointer_cast(host_triangles.data()), sizeof(host_triangles), cudaMemcpyHostToDevice);
+    cudaMallocManaged(&(this->scene_triangles), sizeof(Triangle) * host_triangles.size());
+    cudaMemcpy(this->scene_triangles, thrust::raw_pointer_cast(host_triangles.data()), sizeof(Triangle) * host_triangles.size(), cudaMemcpyHostToDevice);
+    this->num_triangles = host_triangles.size();
 
     render_kernel<<<grid_size, block_size>>>(this);
 }

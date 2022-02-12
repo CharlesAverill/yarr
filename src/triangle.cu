@@ -11,16 +11,7 @@ void init_triangle(Triangle *tri,
                    const Vector<float> &point0,
                    const Vector<float> &point1,
                    const Vector<float> &point2) {
-    tri->point0 = point0;
-    tri->point1 = point1;
-    tri->point2 = point2;
-
-    tri->edge0 = point1 - point0;
-    tri->edge1 = point2 - point0;
-
-    tri->normal = tri->edge1 ^ tri->edge0;
-
-    tri->base.type = TRIANGLE_ROT;
+    init_triangle(tri, point0, point1, point2, Vector<int>(255, 0, 0));
 }
 
 void init_triangle(Triangle *tri,
@@ -34,10 +25,13 @@ void init_triangle(Triangle *tri,
 
     tri->edge0 = point1 - point0;
     tri->edge1 = point2 - point0;
+    printf("%f %f %f\n", tri->edge0.x, tri->edge0.y, tri->edge0.z);
+    printf("%f %f %f\n", tri->edge1.x, tri->edge1.y, tri->edge1.z);
 
-    tri->normal = tri->edge1 ^ tri->edge0;
+    tri->normal = (tri->edge1) ^ (tri->edge0);
+    printf("%f %f %f\n", tri->normal.x, tri->normal.y, tri->normal.z);
 
-    set_color(&(tri->base), color);
+    set_color(tri, color);
 
     tri->base.type = TRIANGLE_ROT;
 }
@@ -47,10 +41,11 @@ void set_color(Triangle *obj, const Vector<int> &new_color) {
 }
 
 __hd__ bool is_visible(Triangle *tri,
-                const Vector<float> &ray_origin,
-                const Vector<float> &ray,
-                float &hit_distance,
-                Vector<int> &color) {
+                       const Vector<float> &ray_origin,
+                       const Vector<float> &ray,
+                       float &hit_distance,
+                       Vector<int> &color) {
+
     if(tri->normal % ray >= 0) {
         return false;
     }

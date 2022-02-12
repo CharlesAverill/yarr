@@ -65,7 +65,7 @@ public:
 		Y->init(0, 0.002f, 0);
 		Z->init(0, 0, 1);
 
-		viewport_origin->init(0, 1, 0);
+		viewport_origin->init(0, 1, -4);
 	}
 
 	// Save canvas to PPM file
