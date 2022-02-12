@@ -80,10 +80,30 @@ __global__ void render_kernel(Canvas *canvas) {
     Vector<float> ray_direction = (*(canvas->get_X()) * float(x)) + (*(canvas->get_Y()) * float(y) * -1) + (*(canvas->get_Z()));
     ray_direction = !ray_direction;
 
-    if(ray_direction.y < 0) {
-        get_ground_color(&color, canvas->viewport_origin, ray_direction, canvas);
-    } else {
-        get_sky_color(&color, ray_direction, canvas);
+    // Check for intersection with each triangle
+    float hit_distance;
+    bool hit_object = false;
+    float min_hit_distance = C_INFINITY;
+
+    for(int i = 0; i < canvas->num_triangles; i++) {
+        Triangle *test_hit = &(canvas->scene_triangles)[i];
+        Vector<int> test_color;
+        if(is_visible(test_hit, *(canvas->viewport_origin), ray_direction, hit_distance, test_color)) {
+            hit_object = true;
+            if(hit_distance < min_hit_distance) {
+                min_hit_distance = hit_distance;
+                color = test_color;
+            }
+        }
+    }
+
+    // Check for sky or ground plane
+    if(!hit_object) {
+        if(ray_direction.y < 0) {
+            get_ground_color(&color, canvas->viewport_origin, ray_direction, canvas);
+        } else {
+            get_sky_color(&color, ray_direction, canvas);
+        }
     }
 
     // Save color data
@@ -93,5 +113,25 @@ __global__ void render_kernel(Canvas *canvas) {
 }
 
 void Canvas::render(dim3 grid_size, dim3 block_size) {
+    thrust::host_vector<Triangle> host_triangles;
+
+    Triangle *blue_triangle;
+    cudaMallocManaged(&blue_triangle, sizeof(Triangle));
+    init_triangle(blue_triangle, Vector<float>(-1, 0, 0), Vector<float>(1, 0, 0), Vector<float>(0, 1.73, 0), Vector<int>(0, 0, 255));
+    host_triangles.push_back(*blue_triangle);
+
+    Triangle *green_triangle;
+    cudaMallocManaged(&green_triangle, sizeof(Triangle));
+    init_triangle(green_triangle, Vector<float>(2, 0, 2), Vector<float>(1, 1.73, 2), Vector<float>(0, 0, 2), Vector<int>(0, 255, 0));
+    host_triangles.push_back(*green_triangle);
+
+    Triangle *red_triangle;
+    cudaMallocManaged(&red_triangle, sizeof(Triangle));
+    init_triangle(red_triangle, Vector<float>(-0.25, 0.75, -1), Vector<float>(0.75, 0.75, -1), Vector<float>(0.25, 2, -1), Vector<int>(255, 0, 0));
+    host_triangles.push_back(*red_triangle);
+
+    cudaMallocManaged(&(this->scene_triangles), sizeof(host_triangles));
+    cudaMemcpy(this->scene_triangles, thrust::raw_pointer_cast(host_triangles.data()), sizeof(host_triangles), cudaMemcpyHostToDevice);
+
     render_kernel<<<grid_size, block_size>>>(this);
 }

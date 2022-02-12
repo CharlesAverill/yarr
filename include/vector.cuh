@@ -48,6 +48,10 @@ public:
     __hd__ Vector<T> operator+(const Vector& other) const {
         return Vector(x + other.x, y + other.y, z + other.z);
     }
+    // Subtraction
+    Vector operator-(const Vector& other) const {
+        return other + (other * -1);
+    }
     // Negation
     __hd__ Vector<T> operator-() const {
         return (*this) * -1;

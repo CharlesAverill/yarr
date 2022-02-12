@@ -10,7 +10,12 @@
 
 #include <stdio.h>
 
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <thrust/copy.h>
+
 #include "cuda_utils.cuh"
+#include "triangle.cuh"
 #include "utils.cuh"
 #include "vector.cuh"
 
@@ -32,6 +37,10 @@ public:
 
 	// Viewport
 	Vector<float> *viewport_origin;
+
+	// Scene Triangles
+	int num_triangles;
+	Triangle *scene_triangles;
 
 	// Constructors
 	Canvas(int w, int h, int c) {

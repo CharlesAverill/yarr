@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "canvas.cuh"
-#include "vector.cuh"
+#define C_INFINITY 0x7FF0000000000000 // Infinity
+#define C_NINFINITY 0xFFF0000000000000 // Negative Infinity
 
 #endif
