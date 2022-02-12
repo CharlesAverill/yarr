@@ -9,6 +9,7 @@
 #define TRIANGLE_H
 
 #include "renderobject.cuh"
+#include "utils.cuh"
 
 typedef struct {
     RenderObject base;

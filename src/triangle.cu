@@ -25,11 +25,8 @@ void init_triangle(Triangle *tri,
 
     tri->edge0 = point1 - point0;
     tri->edge1 = point2 - point0;
-    printf("%f %f %f\n", tri->edge0.x, tri->edge0.y, tri->edge0.z);
-    printf("%f %f %f\n", tri->edge1.x, tri->edge1.y, tri->edge1.z);
 
     tri->normal = (tri->edge1) ^ (tri->edge0);
-    printf("%f %f %f\n", tri->normal.x, tri->normal.y, tri->normal.z);
 
     set_color(tri, color);
 
@@ -46,7 +43,7 @@ __hd__ bool is_visible(Triangle *tri,
                        float &hit_distance,
                        Vector<int> &color) {
 
-    if(tri->normal % ray >= 0) {
+    if (tri->normal % ray >= 0) {
         return false;
     }
 
@@ -54,20 +51,30 @@ __hd__ bool is_visible(Triangle *tri,
     Vector<float> edge0 = tri->edge0;
     Vector<float> edge1 = tri->edge1;
 
-    float edge0_term = (-(ray_origin.x - point0.x) * (ray.y * edge1.z - ray.z * edge1.y) + (ray_origin.y - point0.y) * (ray.x * edge1.z - ray.z * edge1.x) - (ray_origin.z - point0.z) * (ray.x * edge1.y - ray.y * edge1.x))/(ray.x * edge0.y * edge1.z - ray.x * edge0.z * edge1.y - ray.y * edge0.x * edge1.z + ray.y * edge0.z * edge1.x + ray.z * edge0.x * edge1.y - ray.z * edge0.y * edge1.x);
-	float edge1_term = ((ray_origin.x - point0.x) * (ray.y * edge0.z - ray.z * edge0.y) - (ray_origin.y - point0.y) * (ray.x * edge0.z - ray.z * edge0.x) + (ray_origin.z - point0.z) * (ray.x * edge0.y - ray.y * edge0.x))/(ray.x * edge0.y * edge1.z - ray.x * edge0.z * edge1.y - ray.y * edge0.x * edge1.z + ray.y * edge0.z * edge1.x + ray.z * edge0.x * edge1.y - ray.z * edge0.y * edge1.x);
-	float ray_term = (-(ray_origin.x - point0.x) * (edge0.y * edge1.z - edge0.z * edge1.y) + (ray_origin.y - point0.y) * (edge0.x * edge1.z - edge0.z * edge1.x) - (ray_origin.z - point0.z) * (edge0.x * edge1.y - edge0.y * edge1.x))/(ray.x * edge0.y * edge1.z - ray.x * edge0.z * edge1.y - ray.y * edge0.x * edge1.z + ray.y * edge0.z * edge1.x + ray.z * edge0.x * edge1.y - ray.z * edge0.y * edge1.x);
+    // Linear algebra
+    float edge0_factor = (-(ray_origin.x - point0.x) * (ray.y * edge1.z - ray.z * edge1.y) +
+                           (ray_origin.y - point0.y) * (ray.x * edge1.z - ray.z * edge1.x) -
+                           (ray_origin.z - point0.z) * (ray.x * edge1.y - ray.y * edge1.x)) /
+                           (ray.x * edge0.y * edge1.z - ray.x * edge0.z * edge1.y - ray.y * edge0.x * edge1.z + ray.y * edge0.z * edge1.x + ray.z * edge0.x * edge1.y - ray.z * edge0.y * edge1.x);
+    float edge1_factor = ((ray_origin.x - point0.x) * (ray.y * edge0.z - ray.z * edge0.y) -
+                          (ray_origin.y - point0.y) * (ray.x * edge0.z - ray.z * edge0.x) +
+                          (ray_origin.z - point0.z) * (ray.x * edge0.y - ray.y * edge0.x)) /
+                          (ray.x * edge0.y * edge1.z - ray.x * edge0.z * edge1.y - ray.y * edge0.x * edge1.z + ray.y * edge0.z * edge1.x + ray.z * edge0.x * edge1.y - ray.z * edge0.y * edge1.x);
+    float ray_factor = (-(ray_origin.x - point0.x) * (edge0.y * edge1.z - edge0.z * edge1.y) +
+                         (ray_origin.y - point0.y) * (edge0.x * edge1.z - edge0.z * edge1.x) -
+                         (ray_origin.z - point0.z) * (edge0.x * edge1.y - edge0.y * edge1.x)) /
+                         (ray.x * edge0.y * edge1.z - ray.x * edge0.z * edge1.y - ray.y * edge0.x * edge1.z + ray.y * edge0.z * edge1.x + ray.z * edge0.x * edge1.y - ray.z * edge0.y * edge1.x);
 
-    if ((edge0_term < 0 || edge0_term > 1) ||
-		(edge1_term < 0 || edge1_term > 1) ||
-		(edge1_term + edge1_term > 1) ||
-		ray_term < 0) {
-        return false;
+	if ((edge0_factor < 0 || edge0_factor > 1) ||
+		(edge1_factor < 0 || edge1_factor > 1) ||
+		(edge0_factor + edge1_factor > 1) ||
+		ray_factor < 0) {
+		return false;
     }
 
-    hit_distance = (ray * ray_term).length();
+	hit_distance = (ray * ray_factor).length();
 
-    if (hit_distance < 0.001) {
+    if (hit_distance < HIT_PRECISION) {
         return false;
     }
 

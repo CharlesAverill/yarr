@@ -15,4 +15,7 @@
 #define C_INFINITY 0x7FF0000000000000 // Infinity
 #define C_NINFINITY 0xFFF0000000000000 // Negative Infinity
 
+// Distance determining whether a ray hits a triangle or not
+#define HIT_PRECISION 0.001f
+
 #endif
