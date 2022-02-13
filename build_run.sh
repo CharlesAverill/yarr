@@ -7,7 +7,8 @@ if cmake .. ; then
         echo "-----EXECUTING-----"
         rm $1
         if ./yarr $1 ; then
-            eog $1
+            convert $1 "$1.png"
+            eog "$1.png"
         fi
     else
         echo "-----MAKE FAILURE-----"

@@ -9,6 +9,7 @@
 #define TRIANGLE_H
 
 #include "renderobject.cuh"
+#include "settings.cuh"
 #include "utils.cuh"
 
 typedef struct {
@@ -30,17 +31,19 @@ void init_triangle(Triangle *tri,
                    const Vector<float> &point2);
 
 void init_triangle(Triangle *tri,
-                  const Vector<float> &point0,
-                  const Vector<float> &point1,
-                  const Vector<float> &point2,
-                  const Vector<int> &color);
+                   const Vector<float> &point0,
+                   const Vector<float> &point1,
+                   const Vector<float> &point2,
+                   const Vector<int> &color);
 
 void set_color(Triangle *obj, const Vector<int> &new_color);
 
 __hd__ bool is_visible(Triangle *tri,
-                const Vector<float> &ray_origin,
-                const Vector<float> &ray,
-                float &hit_distance,
-                Vector<int> &color);
+                       const Vector<float> &ray_origin,
+                       const Vector<float> &ray,
+                       Vector<float> &ray_collide_position,
+                       Vector<float> &ray_reflect_direction,
+                       float &hit_distance,
+                       Vector<int> &color);
 
 #endif
