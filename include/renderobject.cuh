@@ -17,9 +17,12 @@ enum RenderObjectType {
 
 typedef struct {
     Vector<int> color;
+    float metallic;
+
     RenderObjectType type;
 } RenderObject;
 
 void set_color(RenderObject *obj, const Vector<int> &new_color);
+void set_metallic(RenderObject *obj, float metallic);
 
 #endif

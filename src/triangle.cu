@@ -12,14 +12,15 @@ void init_triangle(Triangle *tri,
                    const Vector<float> &point1,
                    const Vector<float> &point2)
 {
-    init_triangle(tri, point0, point1, point2, Vector<int>(255, 0, 0));
+    init_triangle(tri, point0, point1, point2, Vector<int>(255, 0, 0), 1.f);
 }
 
 void init_triangle(Triangle *tri,
                    const Vector<float> &point0,
                    const Vector<float> &point1,
                    const Vector<float> &point2,
-                   const Vector<int> &color)
+                   const Vector<int> &color,
+                   float metallic)
 {
     tri->point0 = point0;
     tri->point1 = point1;
@@ -31,11 +32,13 @@ void init_triangle(Triangle *tri,
     tri->normal = (tri->edge1) ^ (tri->edge0);
 
     set_color(tri, color);
+    set_metallic(tri, metallic);
 
     tri->base.type = TRIANGLE_ROT;
 }
 
 void set_color(Triangle *obj, const Vector<int> &new_color) { obj->base.color = new_color; }
+void set_metallic(Triangle *obj, float &new_metallic) { obj->base.metallic = new_metallic; }
 
 __hd__ bool is_visible(Triangle *tri,
                        const Vector<float> &ray_origin,
@@ -43,7 +46,8 @@ __hd__ bool is_visible(Triangle *tri,
                        Vector<float> &ray_collide_position,
                        Vector<float> &ray_reflect_direction,
                        float &hit_distance,
-                       Vector<int> &color)
+                       Vector<int> &color,
+                       float &object_reflectivity)
 {
 
     if (tri->normal % ray >= 0) {
@@ -89,6 +93,8 @@ __hd__ bool is_visible(Triangle *tri,
     // Reflection
     ray_collide_position = point0 + (edge0 * edge0_factor) + (edge1 * edge1_factor);
 	ray_reflect_direction = !(ray + !tri->normal * (!tri->normal % -ray) * 2);
+
+    object_reflectivity = tri->base.metallic;
 
     color = tri->base.color;
 

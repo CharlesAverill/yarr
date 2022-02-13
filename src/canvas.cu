@@ -77,7 +77,7 @@ __global__ void render_kernel(Canvas *canvas)
     }
 
     // Create color vector
-    Vector<int> color;
+    Vector<int> out_color;
 
     // Initialize the ray
     Vector<float> ray_direction = (*(canvas->get_X()) * float(x)) +
@@ -89,7 +89,12 @@ __global__ void render_kernel(Canvas *canvas)
     float hit_distance;
     Vector<float> ray_collide_position;
     Vector<float> ray_reflect_direction;
+    float hit_reflectiveness;
+    float ray_energy = 1.f;
+
     for (int reflectionIndex = 0; reflectionIndex <= MAX_REFLECTIONS; reflectionIndex++) {
+        Vector<int> bounce_color;
+
         // Check for intersection with each triangle
         bool hit_object        = false;
         float min_hit_distance = C_INFINITY;
@@ -97,14 +102,14 @@ __global__ void render_kernel(Canvas *canvas)
 
         for (int triangle_index = 0; triangle_index < canvas->num_triangles; triangle_index++) {
             Triangle *test_hit = &(canvas->scene_triangles)[triangle_index];
-            Vector<int> test_color;
             if (is_visible(test_hit,
                            ray_origin,
                            ray_direction,
                            ray_collide_position,
                            ray_reflect_direction,
                            hit_distance,
-                           test_color)) {
+                           bounce_color,
+                           hit_reflectiveness)) {
                 hit_object = true;
                 if (hit_distance < min_hit_distance) {
                     min_hit_distance = hit_distance;
@@ -121,24 +126,33 @@ __global__ void render_kernel(Canvas *canvas)
                        ray_collide_position,
                        ray_reflect_direction,
                        hit_distance,
-                       color);
+                       bounce_color,
+                       hit_reflectiveness);
             ray_origin    = ray_collide_position;
             ray_direction = ray_reflect_direction;
         } else {
             if (ray_direction.y < 0) {
-                get_ground_color(&color, &ray_origin, ray_direction, canvas);
+                get_ground_color(&bounce_color, &ray_origin, ray_direction, canvas);
+                hit_reflectiveness = 0.f;
             } else {
-                get_sky_color(&color, ray_direction, canvas);
+                get_sky_color(&bounce_color, ray_direction, canvas);
+                hit_reflectiveness = 0.f;
             }
+        }
 
+        // Update color and ray energy
+        out_color = out_color + (bounce_color * (ray_energy * (1 - hit_reflectiveness)));
+        ray_energy *= hit_reflectiveness;
+
+        if(ray_energy <= 0.f) {
             break;
         }
     }
 
     // Save color data
-    canvas->canvas[index]     = color.x;
-    canvas->canvas[index + 1] = color.y;
-    canvas->canvas[index + 2] = color.z;
+    canvas->canvas[index]     = out_color.x;
+    canvas->canvas[index + 1] = out_color.y;
+    canvas->canvas[index + 2] = out_color.z;
 }
 
 void Canvas::render(dim3 grid_size, dim3 block_size)
@@ -151,8 +165,9 @@ void Canvas::render(dim3 grid_size, dim3 block_size)
     init_triangle(blue_triangle,
                   Vector<float>(-2, 0, -1),
                   Vector<float>(2, 0, -1),
-                  Vector<float>(0, 3, -1.1),
-                  Vector<int>(0, 0, 255));
+                  Vector<float>(0, 3, -1),
+                  Vector<int>(0, 0, 255),
+                  0.8f);
     host_triangles.push_back(*blue_triangle);
 
     Triangle *green_triangle;
@@ -160,8 +175,9 @@ void Canvas::render(dim3 grid_size, dim3 block_size)
     init_triangle(green_triangle,
                   Vector<float>(2, 0, -5),
                   Vector<float>(-2, 0, -5),
-                  Vector<float>(0, 3, -4.9),
-                  Vector<int>(0, 255, 0));
+                  Vector<float>(0, 3, -5),
+                  Vector<int>(0, 255, 0),
+                  0.8f);
     host_triangles.push_back(*green_triangle);
 
     // Copy triangles to device
