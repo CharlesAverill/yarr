@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     }
 
     // These are the dimensions of a 4D (RGBA) matrix that we will flatten into 1D
-    int width    = 512;
+    int width    = 1024;
     int height   = 512;
     int channels = 4;
 
