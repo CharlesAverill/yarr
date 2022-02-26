@@ -24,6 +24,11 @@ int Canvas::save_to_ppm(char *fn)
     fprintf(fp, "P3 %d %d 255 ", this->width, this->height);
 
     for (int i = 0; i < size; i++) {
+        // Skip the Alpha channel
+        if(i > 0 && (i + 1) % 4 == 0) {
+            continue;
+        }
+
         fprintf(fp, "%d ", (int)this->canvas[i]);
     }
 
@@ -144,7 +149,7 @@ __global__ void render_kernel(Canvas *canvas)
         out_color = out_color + (bounce_color * (ray_energy * (1 - hit_reflectiveness)));
         ray_energy *= hit_reflectiveness;
 
-        if(ray_energy <= 0.f) {
+        if (ray_energy <= 0.f) {
             break;
         }
     }
@@ -153,9 +158,10 @@ __global__ void render_kernel(Canvas *canvas)
     canvas->canvas[index]     = out_color.x;
     canvas->canvas[index + 1] = out_color.y;
     canvas->canvas[index + 2] = out_color.z;
+    canvas->canvas[index + 3] = 255;
 }
 
-void Canvas::render(dim3 grid_size, dim3 block_size)
+void Canvas::scene_setup()
 {
     // Initialize triangles
     thrust::host_vector<Triangle> host_triangles;
@@ -187,7 +193,10 @@ void Canvas::render(dim3 grid_size, dim3 block_size)
                sizeof(Triangle) * host_triangles.size(),
                cudaMemcpyHostToDevice);
     this->num_triangles = host_triangles.size();
+}
 
+void Canvas::render()
+{
     // Run render kernel
-    render_kernel<<<grid_size, block_size>>>(this);
+    render_kernel<<<this->grid_size, this->block_size>>>(this);
 }

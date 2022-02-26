@@ -9,16 +9,15 @@
 #define CANVAS_H
 
 #include <stdio.h>
-
-#include <glad/glad.h>
+#include <SFML/Graphics.h>
 
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
 #include "cuda_utils.cuh"
-#include "settings.cuh"
 #include "renderobjects/triangle.cuh"
+#include "settings.cuh"
 #include "utils.cuh"
 #include "vector.cuh"
 
@@ -31,8 +30,12 @@ class Canvas
     int channels;
     int size;
 
+    // Kernel dimensions
+    dim3 block_size;
+    dim3 grid_size;
+
     // Array containing our image RGB values
-    int *canvas;
+    sfUint8 *canvas;
 
     // Coordinate Vectors
     Vector<float> *X;
@@ -74,8 +77,10 @@ class Canvas
     // Save canvas to PPM file
     int save_to_ppm(char *fn);
 
+    void scene_setup();
+
     // Run render pipeline on GPU
-    void render(dim3 grid_size, dim3 block_size);
+    void render();
 
     // Convert an integer to a vector of colors
     __hd__ void hex_int_to_color_vec(Vector<int> *out, int in);
@@ -84,6 +89,13 @@ class Canvas
     __hd__ Vector<float> *get_X() { return X; }
     __hd__ Vector<float> *get_Y() { return Y; }
     __hd__ Vector<float> *get_Z() { return Z; }
+
+    // Setters
+    __host__ void set_kernel_size(dim3 grid_size, dim3 block_size)
+    {
+        this->grid_size  = grid_size;
+        this->block_size = block_size;
+    }
 };
 
 #endif
