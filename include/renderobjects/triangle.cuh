@@ -8,7 +8,7 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
-#include "renderobject.cuh"
+#include "renderobjects/renderobject.cuh"
 #include "utils.cuh"
 #include "settings.cuh"
 

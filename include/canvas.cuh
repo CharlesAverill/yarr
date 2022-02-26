@@ -10,13 +10,15 @@
 
 #include <stdio.h>
 
+#include <glad/glad.h>
+
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
 #include "cuda_utils.cuh"
 #include "settings.cuh"
-#include "triangle.cuh"
+#include "renderobjects/triangle.cuh"
 #include "utils.cuh"
 #include "vector.cuh"
 

@@ -5,7 +5,7 @@
  * @brief Description
 */
 
-#include "triangle.cuh"
+#include "renderobjects/triangle.cuh"
 
 void init_triangle(Triangle *tri,
                    const Vector<float> &point0,
