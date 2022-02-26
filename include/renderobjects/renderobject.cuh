@@ -10,20 +10,37 @@
 
 #include "utils/vector.cuh"
 
-enum RenderObjectType {
-    RENDEROBJECT_ROT,
-    TRIANGLE_ROT,
-    SPHERE_ROT,
-};
+class RenderObject
+{
+  public:
+    __hd__ RenderObject() : color(255, 255, 255), metallic(1)
+    {
+    }
 
-typedef struct {
+    __hd__ RenderObject(Vector<int> color, float metallic) : color(color), metallic(metallic)
+    {
+    }
+
+    __hd__ virtual bool is_visible(const Vector<float> &ray_origin,
+                                   const Vector<float> &ray,
+                                   Vector<float> &ray_collide_position,
+                                   Vector<float> &ray_reflect_direction,
+                                   float &hit_distance,
+                                   Vector<int> &color,
+                                   float &object_metallic) const = 0;
+
+    void set_color(const Vector<int> &v)
+    {
+        color = v;
+    }
+
+    void set_metallic(float v)
+    {
+        metallic = v;
+    }
+
     Vector<int> color;
     float metallic;
-
-    RenderObjectType type;
-} RenderObject;
-
-void set_color(RenderObject *obj, const Vector<int> &new_color);
-void set_metallic(RenderObject *obj, float metallic);
+};
 
 #endif

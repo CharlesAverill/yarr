@@ -15,6 +15,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
+#include "renderobjects/octahedron.cuh"
 #include "renderobjects/sphere.cuh"
 #include "renderobjects/triangle.cuh"
 #include "utils/cuda_utils.cuh"
@@ -48,10 +49,8 @@ class Canvas
     Vector<float> *viewport_origin;
 
     // Scene Triangles
-    int num_triangles;
-    int num_spheres;
-    Triangle *scene_triangles;
-    Sphere *scene_spheres;
+    int num_renderobjects;
+    RenderObject **scene_renderobjects;
 
     // Constructors
     Canvas(int w, int h, int c)
@@ -61,10 +60,10 @@ class Canvas
 
     void init(int w, int h, int c)
     {
-        width    = w;
-        height   = h;
+        width = w;
+        height = h;
         channels = c;
-        size     = w * h * c;
+        size = w * h * c;
 
         cudaMallocManaged(&canvas, width * height * channels * 4);
 
@@ -109,7 +108,7 @@ class Canvas
     // Setters
     __host__ void set_kernel_size(dim3 grid_size, dim3 block_size)
     {
-        this->grid_size  = grid_size;
+        this->grid_size = grid_size;
         this->block_size = block_size;
     }
 };

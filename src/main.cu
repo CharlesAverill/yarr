@@ -56,9 +56,6 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
         // Render output
         canvas->render();
 
-        gpuErrorCheck(cudaPeekAtLastError());
-        gpuErrorCheck(cudaDeviceSynchronize());
-
         sfRenderWindow_clear(window, sfBlack);
 
         sfTexture_updateFromPixels(texture, canvas->canvas, canvas->width, canvas->height, 0, 0);
@@ -83,8 +80,8 @@ int main(int argc, char *argv[])
     }
 
     // These are the dimensions of a 4D (RGBA) matrix that we will flatten into 1D
-    int width    = 1024;
-    int height   = 1024;
+    int width = 1024;
+    int height = 1024;
     int channels = 4;
 
     // Get device information from CUDA

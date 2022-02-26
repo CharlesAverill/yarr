@@ -56,8 +56,8 @@ __device__ void
 get_ground_color(Vector<int> *color, Vector<float> *ray_origin, Vector<float> ray, Canvas *canvas)
 {
     float distance = -1 * ray_origin->y / ray.y;
-    float x        = ray_origin->x + distance * ray.x;
-    float z        = ray_origin->z + distance * ray.z;
+    float x = ray_origin->x + distance * ray.x;
+    float z = ray_origin->z + distance * ray.z;
 
     if ((int)abs(floor(x)) % 2 == (int)abs(floor(z)) % 2) {
         canvas->hex_int_to_color_vec(color, 0xFF0000);
@@ -69,8 +69,8 @@ get_ground_color(Vector<int> *color, Vector<float> *ray_origin, Vector<float> ra
 __global__ void render_kernel(Canvas *canvas)
 {
     // Kernel row and column based on their thread and block indices
-    int x           = (threadIdx.x + blockIdx.x * blockDim.x) - (canvas->width / 2);
-    int y           = (threadIdx.y + blockIdx.y * blockDim.y) - (canvas->height / 2);
+    int x = (threadIdx.x + blockIdx.x * blockDim.x) - (canvas->width / 2);
+    int y = (threadIdx.y + blockIdx.y * blockDim.y) - (canvas->height / 2);
     int color_index = threadIdx.z + blockIdx.z * blockDim.z;
     // The 1D index of `canvas` given our 3D information
     int index = ((y + (canvas->width / 2)) * canvas->height * canvas->channels) +
@@ -87,7 +87,7 @@ __global__ void render_kernel(Canvas *canvas)
     // Initialize the ray
     Vector<float> ray_direction = (*(canvas->get_X()) * float(x)) +
                                   (*(canvas->get_Y()) * float(y) * -1) + (*(canvas->get_Z()));
-    ray_direction            = !ray_direction;
+    ray_direction = !ray_direction;
     Vector<float> ray_origin = *(canvas->viewport_origin);
 
     // Cast the ray
@@ -101,77 +101,39 @@ __global__ void render_kernel(Canvas *canvas)
         Vector<int> bounce_color;
 
         // Check for intersection with each triangle
-        bool hit_object        = false;
+        bool hit_object = false;
         float min_hit_distance = C_INFINITY;
 
-        RenderObjectType hit_type = RENDEROBJECT_ROT;
-        Triangle *closest_triangle;
-        Sphere *closest_sphere;
+        RenderObject *closest_renderobject;
 
-        for (int triangle_index = 0; triangle_index < canvas->num_triangles; triangle_index++) {
-            Triangle *test_hit = &(canvas->scene_triangles)[triangle_index];
-            if (is_visible(test_hit,
-                           ray_origin,
-                           ray_direction,
-                           ray_collide_position,
-                           ray_reflect_direction,
-                           hit_distance,
-                           bounce_color,
-                           hit_reflectiveness)) {
+        for (int index = 0; index < canvas->num_renderobjects; index++) {
+            RenderObject *test_hit = canvas->scene_renderobjects[index];
+            if (test_hit->is_visible(ray_origin,
+                                     ray_direction,
+                                     ray_collide_position,
+                                     ray_reflect_direction,
+                                     hit_distance,
+                                     bounce_color,
+                                     hit_reflectiveness)) {
                 hit_object = true;
                 if (hit_distance < min_hit_distance) {
                     min_hit_distance = hit_distance;
-                    closest_triangle = test_hit;
-                    hit_type         = TRIANGLE_ROT;
-                }
-            }
-        }
-
-        for (int sphere_index = 0; sphere_index < canvas->num_spheres; sphere_index++) {
-            Sphere *test_hit = &(canvas->scene_spheres)[sphere_index];
-            if (is_visible(test_hit,
-                           ray_origin,
-                           ray_direction,
-                           ray_collide_position,
-                           ray_reflect_direction,
-                           hit_distance,
-                           bounce_color,
-                           hit_reflectiveness)) {
-                hit_object = true;
-                if (hit_distance < min_hit_distance) {
-                    min_hit_distance = hit_distance;
-                    closest_sphere   = test_hit;
-                    hit_type         = SPHERE_ROT;
+                    closest_renderobject = test_hit;
                 }
             }
         }
 
         // Check for sky or ground plane
-        if (hit_object) {
-            switch (hit_type) {
-            case TRIANGLE_ROT:
-                is_visible(closest_triangle,
-                           ray_origin,
-                           ray_direction,
-                           ray_collide_position,
-                           ray_reflect_direction,
-                           hit_distance,
-                           bounce_color,
-                           hit_reflectiveness);
-                break;
-            case SPHERE_ROT:
-                is_visible(closest_sphere,
-                           ray_origin,
-                           ray_direction,
-                           ray_collide_position,
-                           ray_reflect_direction,
-                           hit_distance,
-                           bounce_color,
-                           hit_reflectiveness);
-                break;
-            }
+        if (hit_object && closest_renderobject) {
+            closest_renderobject->is_visible(ray_origin,
+                                             ray_direction,
+                                             ray_collide_position,
+                                             ray_reflect_direction,
+                                             hit_distance,
+                                             bounce_color,
+                                             hit_reflectiveness);
 
-            ray_origin    = ray_collide_position;
+            ray_origin = ray_collide_position;
             ray_direction = ray_reflect_direction;
         } else {
             if (ray_direction.y < 0) {
@@ -193,7 +155,7 @@ __global__ void render_kernel(Canvas *canvas)
     }
 
     // Save color data
-    canvas->canvas[index]     = out_color.x;
+    canvas->canvas[index] = out_color.x;
     canvas->canvas[index + 1] = out_color.y;
     canvas->canvas[index + 2] = out_color.z;
     // Alpha
@@ -203,133 +165,39 @@ __global__ void render_kernel(Canvas *canvas)
 __global__ void scene_setup_kernel(Canvas *canvas)
 {
     // Initialize triangles
-    List<Triangle> host_triangles;
+    List<RenderObject *> renderobjects;
 
     // Octahedron
-    Triangle *tri1 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri2 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri3 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri4 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri5 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri6 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri7 = (Triangle *)malloc(sizeof(Triangle));
-    Triangle *tri8 = (Triangle *)malloc(sizeof(Triangle));
-
-    /*
-    cudaMallocManaged(&tri1, sizeof(Triangle));
-    cudaMallocManaged(&tri2, sizeof(Triangle));
-    cudaMallocManaged(&tri3, sizeof(Triangle));
-    cudaMallocManaged(&tri4, sizeof(Triangle));
-    cudaMallocManaged(&tri5, sizeof(Triangle));
-    cudaMallocManaged(&tri6, sizeof(Triangle));
-    cudaMallocManaged(&tri7, sizeof(Triangle));
-    cudaMallocManaged(&tri8, sizeof(Triangle));
-	*/
-
-    init_triangle(tri1,
-                  Vector<float>(0, 0, 0),
-                  Vector<float>(-1, 1, 0),
-                  Vector<float>(0, 1, 1),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri2,
-                  Vector<float>(0, 0, 0),
-                  Vector<float>(0, 1, -1),
-                  Vector<float>(-1, 1, 0),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri3,
-                  Vector<float>(0, 0, 0),
-                  Vector<float>(1, 1, 0),
-                  Vector<float>(0, 1, -1),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri4,
-                  Vector<float>(0, 0, 0),
-                  Vector<float>(0, 1, 1),
-                  Vector<float>(1, 2, 0),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri5,
-                  Vector<float>(0, 2, 0),
-                  Vector<float>(0, 1, 1),
-                  Vector<float>(-1, 1, 0),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri6,
-                  Vector<float>(0, 2, 0),
-                  Vector<float>(1, 1, 0),
-                  Vector<float>(0, 1, 1),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri7,
-                  Vector<float>(0, 2, 0),
-                  Vector<float>(0, 1, -1),
-                  Vector<float>(1, 1, 0),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    init_triangle(tri8,
-                  Vector<float>(0, 2, 0),
-                  Vector<float>(-1, 1, 0),
-                  Vector<float>(0, 1, -1),
-                  Vector<int>(0, 0, 0),
-                  0.95f);
-
-    host_triangles.add(*tri1);
-    host_triangles.add(*tri2);
-    host_triangles.add(*tri3);
-    host_triangles.add(*tri4);
-    host_triangles.add(*tri5);
-    host_triangles.add(*tri6);
-    host_triangles.add(*tri7);
-    host_triangles.add(*tri8);
+    Octahedron *oct = new Octahedron(Vector<float>{0, 1, 0}, 1.0f);
+    oct->extend_list(&renderobjects);
 
     // Initialize Spheres
-    List<Sphere> host_spheres;
-
-    Sphere *reflective_sphere = (Sphere *)malloc(sizeof(Sphere));
-    //cudaMallocManaged(&reflective_sphere, sizeof(Sphere));
-    init_sphere(reflective_sphere, Vector<float>(1, 2, 0), 0.5f, Vector<int>(0, 0, 0), 0.95f);
-    host_spheres.add(*reflective_sphere);
-
-    Sphere *red_sphere = (Sphere *)malloc(sizeof(Sphere));
-    //cudaMallocManaged(&red_sphere, sizeof(Sphere));
-    init_sphere(red_sphere, Vector<float>(-1.25f, 0.8f, 0), 0.25f, Vector<int>(255, 0, 0), 0.5f);
-    host_spheres.add(*red_sphere);
+    renderobjects.add(new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 0}, 0.95f));
+    renderobjects.add(
+        new Sphere(Vector<float>{-1.25, 0.8, 0}, 0.25f, Vector<int>{255, 0, 0}, 0.5f));
 
     // Copy triangles to device
-    canvas->scene_triangles = (Triangle *)malloc(sizeof(Triangle) * host_triangles.size());
+    canvas->scene_renderobjects =
+        (RenderObject **)malloc(sizeof(RenderObject *) * renderobjects.size());
     //cudaMallocManaged(&(canvas->scene_triangles), sizeof(Triangle) * host_triangles.size());
-    cudaMemcpyAsync(canvas->scene_triangles,
-                    host_triangles.getArray(),
-                    sizeof(Triangle) * host_triangles.size(),
+    cudaMemcpyAsync(canvas->scene_renderobjects,
+                    renderobjects.getArray(),
+                    sizeof(RenderObject *) * renderobjects.size(),
                     cudaMemcpyDeviceToDevice);
-    canvas->num_triangles = host_triangles.size();
-
-    // Copy spheres to device
-    canvas->scene_spheres = (Sphere *)malloc(sizeof(Sphere) * host_spheres.size());
-    //cudaMallocManaged(&(canvas->scene_spheres), sizeof(Sphere) * host_spheres.size());
-    cudaMemcpyAsync(canvas->scene_spheres,
-                    host_spheres.getArray(),
-                    sizeof(Sphere) * host_spheres.size(),
-                    cudaMemcpyDeviceToDevice);
-    canvas->num_spheres = host_spheres.size();
+    canvas->num_renderobjects = renderobjects.size();
 }
 
 void Canvas::scene_setup()
 {
     scene_setup_kernel<<<1, 1>>>(this);
+    gpuErrorCheck(cudaPeekAtLastError());
+    gpuErrorCheck(cudaDeviceSynchronize());
 }
 
 void Canvas::render()
 {
     // Run render kernel
     render_kernel<<<this->grid_size, this->block_size>>>(this);
+    gpuErrorCheck(cudaPeekAtLastError());
+    gpuErrorCheck(cudaDeviceSynchronize());
 }

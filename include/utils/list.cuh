@@ -44,27 +44,27 @@ template <typename T> class List
     //~Constructors-----------------------------------------------
     __hd__ List()
     {
-        this->_array    = new T[20];
+        this->_array = new T[20];
         this->_capacity = 20;
-        this->_size     = 0;
+        this->_size = 0;
 
         _sorted = false;
     }
 
     __hd__ List(int size)
     {
-        this->_array    = new T[this->_size];
+        this->_array = new T[this->_size];
         this->_capacity = this->_size;
-        this->_size     = 0;
+        this->_size = 0;
 
         _sorted = false;
     }
 
     __hd__ List(const List<T> &list)
     {
-        this->_array    = new T[list.size() * 2];
+        this->_array = new T[list.size() * 2];
         this->_capacity = list.size() * 2;
-        this->_size     = list.size();
+        this->_size = list.size();
 
         _sorted = false;
 
@@ -95,7 +95,7 @@ template <typename T> class List
     __hd__ void reallocate(int newSize)
     {
         this->_capacity = newSize;
-        T *temp         = new T[newSize];
+        T *temp = new T[newSize];
 
         for (int i = 0; i < this->_size; i++) {
             temp[i] = this->_array[i];
@@ -145,6 +145,13 @@ template <typename T> class List
         }
     }
 
+    __hd__ void extend_arr(T *array, int size)
+    {
+        for (int i = 0; i < size; i++) {
+            add(array[i]);
+        }
+    }
+
     __hd__ bool remove(const T &element)
     {
         int index = binarySearch(element);
@@ -179,14 +186,14 @@ template <typename T> class List
         delete[] this->_array;
         this->_array = new T[this->_capacity];
 
-        _sorted     = false;
+        _sorted = false;
         this->_size = 0;
     }
 
     __hd__ bool swap(int index1, int index2)
     {
         if (index1 >= 0 && index2 >= 0 && index1 < this->_size && index2 < this->_size) {
-            T temp               = this->_array[index1];
+            T temp = this->_array[index1];
             this->_array[index1] = this->_array[index2];
             this->_array[index2] = temp;
 
