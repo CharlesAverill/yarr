@@ -200,29 +200,31 @@ __global__ void render_kernel(Canvas *canvas)
     canvas->canvas[index + 3] = 255;
 }
 
-void Canvas::scene_setup()
+__global__ void scene_setup_kernel(Canvas *canvas)
 {
     // Initialize triangles
-    thrust::host_vector<Triangle> host_triangles;
+    List<Triangle> host_triangles;
 
     // Octahedron
-    Triangle *tri1;
-    Triangle *tri2;
-    Triangle *tri3;
-    Triangle *tri4;
-    Triangle *tri5;
-    Triangle *tri6;
-    Triangle *tri7;
-    Triangle *tri8;
+    Triangle *tri1 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri2 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri3 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri4 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri5 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri6 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri7 = (Triangle *)malloc(sizeof(Triangle));
+    Triangle *tri8 = (Triangle *)malloc(sizeof(Triangle));
 
-    cudaMallocManaged(&tri1, sizeof(Sphere));
-    cudaMallocManaged(&tri2, sizeof(Sphere));
-    cudaMallocManaged(&tri3, sizeof(Sphere));
-    cudaMallocManaged(&tri4, sizeof(Sphere));
-    cudaMallocManaged(&tri5, sizeof(Sphere));
-    cudaMallocManaged(&tri6, sizeof(Sphere));
-    cudaMallocManaged(&tri7, sizeof(Sphere));
-    cudaMallocManaged(&tri8, sizeof(Sphere));
+    /*
+    cudaMallocManaged(&tri1, sizeof(Triangle));
+    cudaMallocManaged(&tri2, sizeof(Triangle));
+    cudaMallocManaged(&tri3, sizeof(Triangle));
+    cudaMallocManaged(&tri4, sizeof(Triangle));
+    cudaMallocManaged(&tri5, sizeof(Triangle));
+    cudaMallocManaged(&tri6, sizeof(Triangle));
+    cudaMallocManaged(&tri7, sizeof(Triangle));
+    cudaMallocManaged(&tri8, sizeof(Triangle));
+	*/
 
     init_triangle(tri1,
                   Vector<float>(0, 0, 0),
@@ -280,43 +282,50 @@ void Canvas::scene_setup()
                   Vector<int>(0, 0, 0),
                   0.95f);
 
-    host_triangles.push_back(*tri1);
-    host_triangles.push_back(*tri2);
-    host_triangles.push_back(*tri3);
-    host_triangles.push_back(*tri4);
-    host_triangles.push_back(*tri5);
-    host_triangles.push_back(*tri6);
-    host_triangles.push_back(*tri7);
-    host_triangles.push_back(*tri8);
+    host_triangles.add(*tri1);
+    host_triangles.add(*tri2);
+    host_triangles.add(*tri3);
+    host_triangles.add(*tri4);
+    host_triangles.add(*tri5);
+    host_triangles.add(*tri6);
+    host_triangles.add(*tri7);
+    host_triangles.add(*tri8);
 
     // Initialize Spheres
-    thrust::host_vector<Sphere> host_spheres;
+    List<Sphere> host_spheres;
 
-    Sphere *reflective_sphere;
-    cudaMallocManaged(&reflective_sphere, sizeof(Sphere));
+    Sphere *reflective_sphere = (Sphere *)malloc(sizeof(Sphere));
+    //cudaMallocManaged(&reflective_sphere, sizeof(Sphere));
     init_sphere(reflective_sphere, Vector<float>(1, 2, 0), 0.5f, Vector<int>(0, 0, 0), 0.95f);
-    host_spheres.push_back(*reflective_sphere);
+    host_spheres.add(*reflective_sphere);
 
-    Sphere *red_sphere;
-    cudaMallocManaged(&red_sphere, sizeof(Sphere));
+    Sphere *red_sphere = (Sphere *)malloc(sizeof(Sphere));
+    //cudaMallocManaged(&red_sphere, sizeof(Sphere));
     init_sphere(red_sphere, Vector<float>(-1.25f, 0.8f, 0), 0.25f, Vector<int>(255, 0, 0), 0.5f);
-    host_spheres.push_back(*red_sphere);
+    host_spheres.add(*red_sphere);
 
     // Copy triangles to device
-    cudaMallocManaged(&(this->scene_triangles), sizeof(Triangle) * host_triangles.size());
-    cudaMemcpy(this->scene_triangles,
-               thrust::raw_pointer_cast(host_triangles.data()),
-               sizeof(Triangle) * host_triangles.size(),
-               cudaMemcpyHostToDevice);
-    this->num_triangles = host_triangles.size();
+    canvas->scene_triangles = (Triangle *)malloc(sizeof(Triangle) * host_triangles.size());
+    //cudaMallocManaged(&(canvas->scene_triangles), sizeof(Triangle) * host_triangles.size());
+    cudaMemcpyAsync(canvas->scene_triangles,
+                    host_triangles.getArray(),
+                    sizeof(Triangle) * host_triangles.size(),
+                    cudaMemcpyDeviceToDevice);
+    canvas->num_triangles = host_triangles.size();
 
     // Copy spheres to device
-    cudaMallocManaged(&(this->scene_spheres), sizeof(Sphere) * host_spheres.size());
-    cudaMemcpy(this->scene_spheres,
-               thrust::raw_pointer_cast(host_spheres.data()),
-               sizeof(Sphere) * host_spheres.size(),
-               cudaMemcpyHostToDevice);
-    this->num_spheres = host_spheres.size();
+    canvas->scene_spheres = (Sphere *)malloc(sizeof(Sphere) * host_spheres.size());
+    //cudaMallocManaged(&(canvas->scene_spheres), sizeof(Sphere) * host_spheres.size());
+    cudaMemcpyAsync(canvas->scene_spheres,
+                    host_spheres.getArray(),
+                    sizeof(Sphere) * host_spheres.size(),
+                    cudaMemcpyDeviceToDevice);
+    canvas->num_spheres = host_spheres.size();
+}
+
+void Canvas::scene_setup()
+{
+    scene_setup_kernel<<<1, 1>>>(this);
 }
 
 void Canvas::render()

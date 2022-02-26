@@ -5,4 +5,4 @@
  * @brief Description
 */
 
-#include "utils.cuh"
+#include "utils/utils.cuh"

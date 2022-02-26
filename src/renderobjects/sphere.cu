@@ -27,8 +27,14 @@ void init_sphere(Sphere *sph,
     sph->base.type = SPHERE_ROT;
 }
 
-void set_color(Sphere *obj, const Vector<int> &new_color) { obj->base.color = new_color; }
-void set_metallic(Sphere *obj, float &new_metallic) { obj->base.metallic = new_metallic; }
+void set_color(Sphere *obj, const Vector<int> &new_color)
+{
+    obj->base.color = new_color;
+}
+void set_metallic(Sphere *obj, float &new_metallic)
+{
+    obj->base.metallic = new_metallic;
+}
 
 __hd__ bool is_visible(Sphere *sph,
                        const Vector<float> &ray_origin,
@@ -52,8 +58,8 @@ __hd__ bool is_visible(Sphere *sph,
             return false;
         }
 
-        ray_collide_position   = ray_origin + ray * hit_distance;
-        Vector<float> normal   = !(-p + ray * hit_distance);
+        ray_collide_position  = ray_origin + ray * hit_distance;
+        Vector<float> normal  = !(-p + ray * hit_distance);
         ray_reflect_direction = !(ray + !normal * (!normal % -ray) * 2);
 
         color               = sph->base.color;

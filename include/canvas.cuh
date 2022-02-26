@@ -8,19 +8,20 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
-#include <stdio.h>
 #include <SFML/Graphics.h>
+#include <stdio.h>
 
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
-#include "cuda_utils.cuh"
-#include "renderobjects/triangle.cuh"
 #include "renderobjects/sphere.cuh"
-#include "settings.cuh"
-#include "utils.cuh"
-#include "vector.cuh"
+#include "renderobjects/triangle.cuh"
+#include "utils/cuda_utils.cuh"
+#include "utils/list.cuh"
+#include "utils/settings.cuh"
+#include "utils/utils.cuh"
+#include "utils/vector.cuh"
 
 class Canvas
 {
@@ -53,7 +54,10 @@ class Canvas
     Sphere *scene_spheres;
 
     // Constructors
-    Canvas(int w, int h, int c) { init(w, h, c); }
+    Canvas(int w, int h, int c)
+    {
+        init(w, h, c);
+    }
 
     void init(int w, int h, int c)
     {
@@ -89,9 +93,18 @@ class Canvas
     __hd__ void hex_int_to_color_vec(Vector<int> *out, int in);
 
     // Getters
-    __hd__ Vector<float> *get_X() { return X; }
-    __hd__ Vector<float> *get_Y() { return Y; }
-    __hd__ Vector<float> *get_Z() { return Z; }
+    __hd__ Vector<float> *get_X()
+    {
+        return X;
+    }
+    __hd__ Vector<float> *get_Y()
+    {
+        return Y;
+    }
+    __hd__ Vector<float> *get_Z()
+    {
+        return Z;
+    }
 
     // Setters
     __host__ void set_kernel_size(dim3 grid_size, dim3 block_size)

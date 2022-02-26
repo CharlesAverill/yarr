@@ -8,7 +8,7 @@
 #ifndef RENDEROBJECT_H
 #define RENDEROBJECT_H
 
-#include "vector.cuh"
+#include "utils/vector.cuh"
 
 enum RenderObjectType {
     RENDEROBJECT_ROT,

@@ -10,14 +10,14 @@
 #include <stdio.h>
 
 #include "canvas.cuh"
-#include "cuda_utils.cuh"
 #include "input.cuh"
-#include "utils.cuh"
-#include "vector.cuh"
+#include "utils/cuda_utils.cuh"
+#include "utils/utils.cuh"
+#include "utils/vector.cuh"
 
 #define BLOCK_SIZE 16
 
-sfRenderWindow *csfml_setup(int width, int height)
+sfRenderWindow *csfml_setup(unsigned int width, unsigned int height)
 {
     sfVideoMode mode = {width, height, 32};
 

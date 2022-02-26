@@ -8,6 +8,8 @@
 #ifndef CUDA_UTILS_H
 #define CUDA_UTILS_H
 
+#include <stdio.h>
+
 #ifdef __CUDACC__
 #define __hd__ __host__ __device__
 #else

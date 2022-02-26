@@ -9,8 +9,9 @@
 #define TRIANGLE_H
 
 #include "renderobjects/renderobject.cuh"
-#include "utils.cuh"
-#include "settings.cuh"
+#include "utils/cuda_utils.cuh"
+#include "utils/settings.cuh"
+#include "utils/utils.cuh"
 
 typedef struct {
     RenderObject base;
@@ -25,20 +26,20 @@ typedef struct {
     Vector<float> normal;
 } Triangle;
 
-void init_triangle(Triangle *tri,
-                   const Vector<float> &point0,
-                   const Vector<float> &point1,
-                   const Vector<float> &point2);
+__hd__ void init_triangle(Triangle *tri,
+                          const Vector<float> &point0,
+                          const Vector<float> &point1,
+                          const Vector<float> &point2);
 
-void init_triangle(Triangle *tri,
-                   const Vector<float> &point0,
-                   const Vector<float> &point1,
-                   const Vector<float> &point2,
-                   const Vector<int> &color,
-                   float metallic);
+__hd__ void init_triangle(Triangle *tri,
+                          const Vector<float> &point0,
+                          const Vector<float> &point1,
+                          const Vector<float> &point2,
+                          const Vector<int> &color,
+                          float metallic);
 
-void set_color(Triangle *obj, const Vector<int> &new_color);
-void set_metallic(Triangle *obj, float &new_metallic);
+__hd__ void set_color(Triangle *obj, const Vector<int> &new_color);
+__hd__ void set_metallic(Triangle *obj, float &new_metallic);
 
 __hd__ bool is_visible(Triangle *tri,
                        const Vector<float> &ray_origin,

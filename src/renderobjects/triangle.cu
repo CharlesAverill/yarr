@@ -34,11 +34,17 @@ void init_triangle(Triangle *tri,
     set_color(tri, color);
     set_metallic(tri, metallic);
 
-    tri->base.type     = TRIANGLE_ROT;
+    tri->base.type = TRIANGLE_ROT;
 }
 
-void set_color(Triangle *obj, const Vector<int> &new_color) { obj->base.color = new_color; }
-void set_metallic(Triangle *obj, float &new_metallic) { obj->base.metallic = new_metallic; }
+void set_color(Triangle *obj, const Vector<int> &new_color)
+{
+    obj->base.color = new_color;
+}
+void set_metallic(Triangle *obj, float &new_metallic)
+{
+    obj->base.metallic = new_metallic;
+}
 
 __hd__ bool is_visible(Triangle *tri,
                        const Vector<float> &ray_origin,
@@ -49,7 +55,6 @@ __hd__ bool is_visible(Triangle *tri,
                        Vector<int> &color,
                        float &object_reflectivity)
 {
-
     if (tri->normal % ray >= 0) {
         return false;
     }

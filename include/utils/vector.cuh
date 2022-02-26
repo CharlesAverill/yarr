@@ -21,7 +21,10 @@ template <typename T> class Vector
     T z;
 
     // Constructors
-    __hd__ Vector(T a = 0, T b = 0, T c = 0) { init(a, b, c); }
+    __hd__ Vector(T a = 0, T b = 0, T c = 0)
+    {
+        init(a, b, c);
+    }
 
     __hd__ void init(T a = 0, T b = 0, T c = 0)
     {
@@ -39,7 +42,10 @@ template <typename T> class Vector
     }
 
     // Getters
-    __hd__ float length() const { return sqrt((x * x) + (y * y) + (z * z)); }
+    __hd__ float length() const
+    {
+        return sqrt((x * x) + (y * y) + (z * z));
+    }
 
     // Operator overloading
     // Addition
@@ -53,7 +59,10 @@ template <typename T> class Vector
         return Vector<T>(x - other.x, y - other.y, z - other.z);
     }
     // Negation
-    __hd__ Vector<T> operator-() const { return (*this) * -1; }
+    __hd__ Vector<T> operator-() const
+    {
+        return (*this) * -1;
+    }
     // Scalar multiplication
     __hd__ Vector<T> operator*(float r) const
     {
@@ -72,7 +81,10 @@ template <typename T> class Vector
                          (x * other.y) - (y * other.x));
     }
     // Unit vector
-    __hd__ Vector<T> operator!() const { return (*this) * (1.0f / this->length()); }
+    __hd__ Vector<T> operator!() const
+    {
+        return (*this) * (1.0f / this->length());
+    }
 };
 
 #endif

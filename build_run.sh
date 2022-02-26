@@ -1,3 +1,5 @@
+echo "---CLANG-FORMAT----"
+clang-format style=file -i src/* src/renderobjects/* src/utils/* include/* include/renderobjects/* include/utils/*
 echo "-----CMAKE---------"
 cd ~/CProjects/yarr/build
 if cmake .. ; then
