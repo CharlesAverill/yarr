@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 
     // These are the dimensions of a 4D (RGBA) matrix that we will flatten into 1D
     int width    = 1024;
-    int height   = 512;
+    int height   = 1024;
     int channels = 4;
 
     // Get device information from CUDA
