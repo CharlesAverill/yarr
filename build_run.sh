@@ -6,7 +6,7 @@ if cmake .. ; then
         cd ../bin
         echo "-----EXECUTING-----"
         rm $1
-        # rm "$1.png"
+        rm "$1.png"
         if ./yarr $1 ; then
             convert $1 "$1.png"
             # eog "$1.png"

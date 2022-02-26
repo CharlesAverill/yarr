@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     render_loop(canvas, window);
 
     // Save last render to PPM
-    printf("Saving render to %s\n", output_fn);
+    printf("Saving last render to %s\n", output_fn);
     canvas->save_to_ppm(output_fn);
 
     // Free memory

@@ -17,6 +17,7 @@
 
 #include "cuda_utils.cuh"
 #include "renderobjects/triangle.cuh"
+#include "renderobjects/sphere.cuh"
 #include "settings.cuh"
 #include "utils.cuh"
 #include "vector.cuh"
@@ -47,7 +48,9 @@ class Canvas
 
     // Scene Triangles
     int num_triangles;
+    int num_spheres;
     Triangle *scene_triangles;
+    Sphere *scene_spheres;
 
     // Constructors
     Canvas(int w, int h, int c) { init(w, h, c); }

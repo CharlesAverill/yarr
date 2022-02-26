@@ -34,7 +34,7 @@ void init_triangle(Triangle *tri,
     set_color(tri, color);
     set_metallic(tri, metallic);
 
-    tri->base.type = TRIANGLE_ROT;
+    tri->base.type     = TRIANGLE_ROT;
 }
 
 void set_color(Triangle *obj, const Vector<int> &new_color) { obj->base.color = new_color; }
@@ -91,8 +91,8 @@ __hd__ bool is_visible(Triangle *tri,
     }
 
     // Reflection
-    ray_collide_position = point0 + (edge0 * edge0_factor) + (edge1 * edge1_factor);
-	ray_reflect_direction = !(ray + !tri->normal * (!tri->normal % -ray) * 2);
+    ray_collide_position  = point0 + (edge0 * edge0_factor) + (edge1 * edge1_factor);
+    ray_reflect_direction = !(ray + !tri->normal * (!tri->normal % -ray) * 2);
 
     object_reflectivity = tri->base.metallic;
 

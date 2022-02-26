@@ -13,6 +13,7 @@
 enum RenderObjectType {
     RENDEROBJECT_ROT,
     TRIANGLE_ROT,
+    SPHERE_ROT,
 };
 
 typedef struct {

@@ -25,7 +25,7 @@ int Canvas::save_to_ppm(char *fn)
 
     for (int i = 0; i < size; i++) {
         // Skip the Alpha channel
-        if(i > 0 && (i + 1) % 4 == 0) {
+        if (i > 0 && (i + 1) % 4 == 0) {
             continue;
         }
 
@@ -103,7 +103,10 @@ __global__ void render_kernel(Canvas *canvas)
         // Check for intersection with each triangle
         bool hit_object        = false;
         float min_hit_distance = C_INFINITY;
+
+        RenderObjectType hit_type = RENDEROBJECT_ROT;
         Triangle *closest_triangle;
+        Sphere *closest_sphere;
 
         for (int triangle_index = 0; triangle_index < canvas->num_triangles; triangle_index++) {
             Triangle *test_hit = &(canvas->scene_triangles)[triangle_index];
@@ -119,20 +122,55 @@ __global__ void render_kernel(Canvas *canvas)
                 if (hit_distance < min_hit_distance) {
                     min_hit_distance = hit_distance;
                     closest_triangle = test_hit;
+                    hit_type         = TRIANGLE_ROT;
+                }
+            }
+        }
+
+        for (int sphere_index = 0; sphere_index < canvas->num_spheres; sphere_index++) {
+            Sphere *test_hit = &(canvas->scene_spheres)[sphere_index];
+            if (is_visible(test_hit,
+                           ray_origin,
+                           ray_direction,
+                           ray_collide_position,
+                           ray_reflect_direction,
+                           hit_distance,
+                           bounce_color,
+                           hit_reflectiveness)) {
+                hit_object = true;
+                if (hit_distance < min_hit_distance) {
+                    min_hit_distance = hit_distance;
+                    closest_sphere   = test_hit;
+                    hit_type         = SPHERE_ROT;
                 }
             }
         }
 
         // Check for sky or ground plane
-        if (hit_object && closest_triangle) {
-            is_visible(closest_triangle,
-                       ray_origin,
-                       ray_direction,
-                       ray_collide_position,
-                       ray_reflect_direction,
-                       hit_distance,
-                       bounce_color,
-                       hit_reflectiveness);
+        if (hit_object) {
+            switch (hit_type) {
+            case TRIANGLE_ROT:
+                is_visible(closest_triangle,
+                           ray_origin,
+                           ray_direction,
+                           ray_collide_position,
+                           ray_reflect_direction,
+                           hit_distance,
+                           bounce_color,
+                           hit_reflectiveness);
+                break;
+            case SPHERE_ROT:
+                is_visible(closest_sphere,
+                           ray_origin,
+                           ray_direction,
+                           ray_collide_position,
+                           ray_reflect_direction,
+                           hit_distance,
+                           bounce_color,
+                           hit_reflectiveness);
+                break;
+            }
+
             ray_origin    = ray_collide_position;
             ray_direction = ray_reflect_direction;
         } else {
@@ -158,6 +196,7 @@ __global__ void render_kernel(Canvas *canvas)
     canvas->canvas[index]     = out_color.x;
     canvas->canvas[index + 1] = out_color.y;
     canvas->canvas[index + 2] = out_color.z;
+    // Alpha
     canvas->canvas[index + 3] = 255;
 }
 
@@ -166,25 +205,102 @@ void Canvas::scene_setup()
     // Initialize triangles
     thrust::host_vector<Triangle> host_triangles;
 
-    Triangle *blue_triangle;
-    cudaMallocManaged(&blue_triangle, sizeof(Triangle));
-    init_triangle(blue_triangle,
-                  Vector<float>(-2, 0, -1),
-                  Vector<float>(2, 0, -1),
-                  Vector<float>(0, 3, -1),
-                  Vector<int>(0, 0, 255),
-                  0.8f);
-    host_triangles.push_back(*blue_triangle);
+    // Octahedron
+    Triangle *tri1;
+    Triangle *tri2;
+    Triangle *tri3;
+    Triangle *tri4;
+    Triangle *tri5;
+    Triangle *tri6;
+    Triangle *tri7;
+    Triangle *tri8;
 
-    Triangle *green_triangle;
-    cudaMallocManaged(&green_triangle, sizeof(Triangle));
-    init_triangle(green_triangle,
-                  Vector<float>(2, 0, -5),
-                  Vector<float>(-2, 0, -5),
-                  Vector<float>(0, 3, -5),
-                  Vector<int>(0, 255, 0),
-                  0.8f);
-    host_triangles.push_back(*green_triangle);
+    cudaMallocManaged(&tri1, sizeof(Sphere));
+    cudaMallocManaged(&tri2, sizeof(Sphere));
+    cudaMallocManaged(&tri3, sizeof(Sphere));
+    cudaMallocManaged(&tri4, sizeof(Sphere));
+    cudaMallocManaged(&tri5, sizeof(Sphere));
+    cudaMallocManaged(&tri6, sizeof(Sphere));
+    cudaMallocManaged(&tri7, sizeof(Sphere));
+    cudaMallocManaged(&tri8, sizeof(Sphere));
+
+    init_triangle(tri1,
+                  Vector<float>(0, 0, 0),
+                  Vector<float>(-1, 1, 0),
+                  Vector<float>(0, 1, 1),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri2,
+                  Vector<float>(0, 0, 0),
+                  Vector<float>(0, 1, -1),
+                  Vector<float>(-1, 1, 0),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri3,
+                  Vector<float>(0, 0, 0),
+                  Vector<float>(1, 1, 0),
+                  Vector<float>(0, 1, -1),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri4,
+                  Vector<float>(0, 0, 0),
+                  Vector<float>(0, 1, 1),
+                  Vector<float>(1, 2, 0),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri5,
+                  Vector<float>(0, 2, 0),
+                  Vector<float>(0, 1, 1),
+                  Vector<float>(-1, 1, 0),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri6,
+                  Vector<float>(0, 2, 0),
+                  Vector<float>(1, 1, 0),
+                  Vector<float>(0, 1, 1),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri7,
+                  Vector<float>(0, 2, 0),
+                  Vector<float>(0, 1, -1),
+                  Vector<float>(1, 1, 0),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    init_triangle(tri8,
+                  Vector<float>(0, 2, 0),
+                  Vector<float>(-1, 1, 0),
+                  Vector<float>(0, 1, -1),
+                  Vector<int>(0, 0, 0),
+                  0.95f);
+
+    host_triangles.push_back(*tri1);
+    host_triangles.push_back(*tri2);
+    host_triangles.push_back(*tri3);
+    host_triangles.push_back(*tri4);
+    host_triangles.push_back(*tri5);
+    host_triangles.push_back(*tri6);
+    host_triangles.push_back(*tri7);
+    host_triangles.push_back(*tri8);
+
+    // Initialize Spheres
+    thrust::host_vector<Sphere> host_spheres;
+
+    Sphere *reflective_sphere;
+    cudaMallocManaged(&reflective_sphere, sizeof(Sphere));
+    init_sphere(reflective_sphere, Vector<float>(1, 2, 0), 0.5f, Vector<int>(0, 0, 0), 0.95f);
+    host_spheres.push_back(*reflective_sphere);
+
+    Sphere *red_sphere;
+    cudaMallocManaged(&red_sphere, sizeof(Sphere));
+    init_sphere(red_sphere, Vector<float>(-1.25f, 0.8f, 0), 0.25f, Vector<int>(255, 0, 0), 0.5f);
+    host_spheres.push_back(*red_sphere);
 
     // Copy triangles to device
     cudaMallocManaged(&(this->scene_triangles), sizeof(Triangle) * host_triangles.size());
@@ -193,6 +309,14 @@ void Canvas::scene_setup()
                sizeof(Triangle) * host_triangles.size(),
                cudaMemcpyHostToDevice);
     this->num_triangles = host_triangles.size();
+
+    // Copy spheres to device
+    cudaMallocManaged(&(this->scene_spheres), sizeof(Sphere) * host_spheres.size());
+    cudaMemcpy(this->scene_spheres,
+               thrust::raw_pointer_cast(host_spheres.data()),
+               sizeof(Sphere) * host_spheres.size(),
+               cudaMemcpyHostToDevice);
+    this->num_spheres = host_spheres.size();
 }
 
 void Canvas::render()
