@@ -14,5 +14,8 @@
 // Ambient lighting in scene
 #define AMBIENT_LIGHT 0.3f
 
-// Diffuse of ground plane
+// Ground settings
+#define GROUND_METALLIC 0.f
+#define GROUND_HARDNESS 0.f
 #define GROUND_DIFFUSE 0.8f
+#define GROUND_SPECULAR 0.f

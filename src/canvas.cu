@@ -168,10 +168,10 @@ __global__ void render_kernel(Canvas *canvas)
                 ray_origin = ray_collide_position;
                 ray_direction = ray_reflect_direction;
 
-                hit_metallic = 0.f;
-                hit_hardness = 0.f;
+                hit_metallic = GROUND_METALLIC;
+                hit_hardness = GROUND_HARDNESS;
                 hit_diffuse = GROUND_DIFFUSE;
-                hit_specular = 0.f;
+                hit_specular = GROUND_SPECULAR;
             } else {
                 get_sky_color(&bounce_color, ray_direction, canvas);
 
@@ -182,30 +182,62 @@ __global__ void render_kernel(Canvas *canvas)
             }
         }
 
+        bool point_directly_hit = true;
+        for (int light_index = 0; light_index < canvas->num_lights; light_index++) {
+            Point *current_light = canvas->scene_lights[light_index];
+            for (int renderobject_index = 0; renderobject_index < canvas->num_renderobjects;
+                 renderobject_index++) {
+                Vector<float> _dummy_fvector;
+                Vector<int> _dummy_ivector;
+                float _dummy_float;
+
+                if (canvas->scene_renderobjects[renderobject_index]->is_visible(
+                        ray_collide_position,
+                        !(current_light->position - ray_collide_position),
+                        _dummy_fvector,
+                        _dummy_fvector,
+                        _dummy_fvector,
+                        _dummy_float,
+                        _dummy_ivector,
+                        _dummy_float,
+                        _dummy_float,
+                        _dummy_float,
+                        _dummy_float)) {
+                    point_directly_hit = false;
+                    break;
+                }
+            }
+        }
+
         // Compute lighting
         if (!hit_sky) {
-            // Compute sum of diffuse and specular for all lights in scene
-            float diffuse_sum = 0;
-            float specular_sum = 0;
-            Vector<int> light_color_sum = Vector<int>(0, 0, 0);
+            if (point_directly_hit) {
+                // Compute sum of diffuse and specular for all lights in scene
+                float diffuse_sum = 0;
+                float specular_sum = 0;
+                Vector<int> light_color_sum = Vector<int>(0, 0, 0);
 
-            float light_color_average_divisor = (1.f / (float)canvas->num_lights);
-            for (int light_index = 0; light_index < canvas->num_lights; light_index++) {
-                Point *current_light = canvas->scene_lights[light_index];
+                float light_color_average_divisor = (1.f / (float)canvas->num_lights);
+                for (int light_index = 0; light_index < canvas->num_lights; light_index++) {
+                    Point *current_light = canvas->scene_lights[light_index];
 
-                diffuse_sum += current_light->diffuse_at_point(hit_normal, ray_collide_position);
-                specular_sum +=
-                    current_light->specular_at_point(ray_collide_position, ray_direction);
+                    diffuse_sum +=
+                        current_light->diffuse_at_point(hit_normal, ray_collide_position);
+                    specular_sum +=
+                        current_light->specular_at_point(ray_collide_position, ray_direction);
 
-                light_color_sum.x += int(current_light->color.x * light_color_average_divisor);
-                light_color_sum.y += int(current_light->color.y * light_color_average_divisor);
-                light_color_sum.z += int(current_light->color.z * light_color_average_divisor);
+                    light_color_sum.x += int(current_light->color.x * light_color_average_divisor);
+                    light_color_sum.y += int(current_light->color.y * light_color_average_divisor);
+                    light_color_sum.z += int(current_light->color.z * light_color_average_divisor);
+                }
+
+                // Phong lighting
+                bounce_color = (bounce_color * AMBIENT_LIGHT) +
+                               (bounce_color * diffuse_sum * hit_diffuse) +
+                               (light_color_sum * pow(specular_sum, hit_hardness) * hit_specular);
+            } else {
+                bounce_color = bounce_color * AMBIENT_LIGHT;
             }
-
-            // Phong lighting
-            bounce_color = (bounce_color * AMBIENT_LIGHT) +
-                           (bounce_color * diffuse_sum * hit_diffuse) +
-                           (light_color_sum * pow(specular_sum, hit_hardness) * hit_specular);
         }
 
         // Update color and ray energy
@@ -251,7 +283,7 @@ __global__ void scene_setup_kernel(Canvas *canvas)
 
     // Initialize Lights
     List<Point *> lights;
-    lights.add(new Point(Vector<float>(0, 2.5, 0), Vector<int>(255, 255, 255)));
+    lights.add(new Point(Vector<float>(0, 100, 0), Vector<int>(255, 255, 255)));
 
     // Copy Lights to canvas
     canvas->scene_lights = (Point **)malloc(sizeof(Point *) * lights.size());
