@@ -50,7 +50,8 @@ class Sphere : public RenderObject
                            float &object_metallic,
                            float &object_hardness,
                            float &object_diffuse,
-                           float &object_specular) const
+                           float &object_specular,
+                           const Vector<float> &random_offsets) const
     {
         const Vector<float> p = center - ray_origin;
         const float threshold = std::sqrt(p % p - radius * radius);
@@ -68,13 +69,20 @@ class Sphere : public RenderObject
             const Vector<float> normal = !(-p + ray * hit_distance);
             ray_reflect_direction = !(ray + !normal * (!normal % -ray) * 2);
 
+            ray_reflect_direction = !(ray_reflect_direction + !random_offsets * roughness);
+
+            if (normal % ray_reflect_direction <= 0) {
+                ray_reflect_direction =
+                    !(ray_reflect_direction + !normal * (!normal % -ray_reflect_direction) * 2);
+            }
+
             object_color = color;
             object_metallic = metallic;
             object_hardness = hardness;
             object_diffuse = diffuse;
             object_specular = specular;
 
-            hit_normal = normal;
+            //hit_normal = normal;
 
             return true;
         }

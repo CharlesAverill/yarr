@@ -103,8 +103,7 @@ int main(int argc, char *argv[])
     canvas->init(width, height, channels);
 
     // Setup scene
-    canvas->scene_setup();
-    canvas->set_kernel_size(grid_size, block_size);
+    canvas->host_setup(grid_size, block_size);
 
     // Setup window
     sfRenderWindow *window = csfml_setup(width, height);

@@ -20,4 +20,4 @@ file(GLOB_RECURSE SRCS ${CMAKE_SOURCE_DIR}/src/*.cu)
 # Final
 add_executable(yarr ${SRCS})
 
-target_link_libraries(${PROJECT_NAME} ${SFML_LIBRARIES} csfml-graphics csfml-window)
+target_link_libraries(${PROJECT_NAME} ${SFML_LIBRARIES} csfml-graphics csfml-window curand)

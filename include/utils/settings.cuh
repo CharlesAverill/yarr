@@ -23,3 +23,6 @@
 // Anti-aliasing
 #define DO_ANTIALISING 1
 #define ANTIALIASING_PRECISION 16
+
+// RNG
+#define SEED 1234

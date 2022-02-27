@@ -9,11 +9,16 @@
 #define CANVAS_H
 
 #include <SFML/Graphics.h>
+
 #include <stdio.h>
+#include <time.h>
 
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+
+#include <curand.h>
+#include <curand_kernel.h>
 
 #include "light/point.cuh"
 #include "renderobjects/octahedron.cuh"
@@ -89,6 +94,7 @@ class Canvas
     int save_to_ppm(char *fn);
 
     void scene_setup();
+    void host_setup(dim3 grid_size, dim3 block_size);
 
     // Run render pipeline on GPU
     void render();

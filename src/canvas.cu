@@ -81,6 +81,13 @@ __global__ void render_kernel(Canvas *canvas)
     int index = ((y + (canvas->width / 2)) * canvas->height * canvas->channels) +
                 ((x + (canvas->height / 2)) * canvas->channels) + color_index;
 
+    // Init RNG
+    curandState randState;
+    // Should be the same for every run
+    curand_init(SEED, index, 0, &randState);
+
+    //printf("%f %f\n", curand_uniform(&randState), curand_uniform(&randState));
+
     // Bounds checking
     if (x >= canvas->width || y >= canvas->height || index >= canvas->size) {
         return;
@@ -131,7 +138,11 @@ __global__ void render_kernel(Canvas *canvas)
                                      hit_metallic,
                                      hit_hardness,
                                      hit_diffuse,
-                                     hit_specular)) {
+                                     hit_specular,
+
+                                     Vector<float>(curand_uniform(&randState),
+                                                   curand_uniform(&randState),
+                                                   curand_uniform(&randState)))) {
                 hit_object = true;
                 if (hit_distance < min_hit_distance) {
                     min_hit_distance = hit_distance;
@@ -153,7 +164,11 @@ __global__ void render_kernel(Canvas *canvas)
                                              hit_metallic,
                                              hit_hardness,
                                              hit_diffuse,
-                                             hit_specular);
+                                             hit_specular,
+
+                                             Vector<float>(curand_uniform(&randState),
+                                                           curand_uniform(&randState),
+                                                           curand_uniform(&randState)));
 
             ray_origin = ray_collide_position;
             ray_direction = ray_reflect_direction;
@@ -202,7 +217,8 @@ __global__ void render_kernel(Canvas *canvas)
                         _dummy_float,
                         _dummy_float,
                         _dummy_float,
-                        _dummy_float)) {
+                        _dummy_float,
+                        Vector<float>(0, 0, 0))) {
                     point_directly_hit = false;
                     break;
                 }
@@ -263,14 +279,14 @@ __global__ void scene_setup_kernel(Canvas *canvas)
     List<RenderObject *> renderobjects;
 
     // Octahedron
-    Octahedron *oct = new Octahedron(Vector<float>{0, 1, 0}, 1.0f);
+    Octahedron *oct = new Octahedron(Vector<float>{0, 1, 0}, 1);
     oct->extend_list(&renderobjects);
 
     // Spheres
     renderobjects.add(
-        new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 255}, 0.25f, 99, 0.9f, 1, 0));
+        new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 255}, 0.1f, 99, 0.9f, 1, 0));
     renderobjects.add(new Sphere(
-        Vector<float>{-0.75, 0.2, 0}, 0.25f, Vector<int>{255, 165, 0}, 0.05f, 99, 0.9f, 1, 0));
+        Vector<float>{-0.75, 0.2, 0}, 0.25f, Vector<int>{255, 165, 0}, 0.05f, 99, 0.9f, 1, 0.5));
 
     // Copy RenderObjects to canvas
     canvas->scene_renderobjects =
@@ -299,6 +315,12 @@ void Canvas::scene_setup()
     scene_setup_kernel<<<1, 1>>>(this);
     gpuErrorCheck(cudaPeekAtLastError());
     gpuErrorCheck(cudaDeviceSynchronize());
+}
+
+void Canvas::host_setup(dim3 grid_size, dim3 block_size)
+{
+    scene_setup();
+    set_kernel_size(grid_size, block_size);
 }
 
 void Canvas::render()

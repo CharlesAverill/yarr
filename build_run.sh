@@ -4,7 +4,7 @@ echo "-----CMAKE---------"
 cd ~/CProjects/yarr/build
 if cmake .. ; then
     echo "-----MAKE----------"
-    if make ; then
+    if make -j$(nproc) ; then
         cd ../bin
         echo "-----EXECUTING-----"
         rm $1

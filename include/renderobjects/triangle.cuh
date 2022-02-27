@@ -61,7 +61,8 @@ class Triangle : public RenderObject
                            float &object_metallic,
                            float &object_hardness,
                            float &object_diffuse,
-                           float &object_specular) const
+                           float &object_specular,
+                           const Vector<float> &random_offsets) const
     {
         if (this->normal % ray >= 0) {
             return false;
@@ -107,13 +108,20 @@ class Triangle : public RenderObject
         ray_collide_position = point0 + (edge0 * edge0_factor) + (edge1 * edge1_factor);
         ray_reflect_direction = !(ray + !this->normal * (!this->normal % -ray) * 2);
 
+        ray_reflect_direction = !(ray_reflect_direction + !random_offsets * roughness);
+
+        if (normal % ray_reflect_direction <= 0) {
+            ray_reflect_direction =
+                !(ray_reflect_direction + !normal * (!normal % -ray_reflect_direction) * 2);
+        }
+
         object_color = color;
         object_metallic = metallic;
         object_hardness = hardness;
         object_diffuse = diffuse;
         object_specular = specular;
 
-        hit_normal = !normal;
+        //hit_normal = !normal;
 
         return true;
     }

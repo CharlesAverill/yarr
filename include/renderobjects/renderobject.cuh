@@ -47,7 +47,8 @@ class RenderObject
                                    float &object_metallic,
                                    float &object_hardness,
                                    float &object_diffuse,
-                                   float &object_specular) const = 0;
+                                   float &object_specular,
+                                   const Vector<float> &random_offsets) const = 0;
 
     void set_color(const Vector<int> &v)
     {

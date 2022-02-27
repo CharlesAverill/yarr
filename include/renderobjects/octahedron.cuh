@@ -139,7 +139,8 @@ class Octahedron : public RenderObject
                            float &object_metallic,
                            float &object_hardness,
                            float &object_diffuse,
-                           float &object_specular) const
+                           float &object_specular,
+                           const Vector<float> &random_offsets) const
     {
         return false;
     }
