@@ -19,3 +19,7 @@
 #define GROUND_HARDNESS 0.f
 #define GROUND_DIFFUSE 0.8f
 #define GROUND_SPECULAR 0.f
+
+// Anti-aliasing
+#define DO_ANTIALISING 1
+#define ANTIALIASING_PRECISION 16
