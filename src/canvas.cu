@@ -52,12 +52,17 @@ __device__ void get_sky_color(Vector<int> *color, Vector<float> ray, Canvas *can
     (*color) = (*color) * pow(1 - ray.y, 2);
 }
 
-__device__ void
-get_ground_color(Vector<int> *color, Vector<float> *ray_origin, Vector<float> ray, Canvas *canvas)
+__device__ void get_ground_color(Vector<int> *color,
+                                 Vector<float> *ray_origin,
+                                 Vector<float> ray,
+                                 Vector<float> &ray_collide_position,
+                                 Canvas *canvas)
 {
     float distance = -1 * ray_origin->y / ray.y;
     float x = ray_origin->x + distance * ray.x;
     float z = ray_origin->z + distance * ray.z;
+
+    ray_collide_position = Vector<float>(x, 0, z);
 
     if ((int)abs(floor(x)) % 2 == (int)abs(floor(z)) % 2) {
         canvas->hex_int_to_color_vec(color, 0xFF0000);
@@ -94,27 +99,39 @@ __global__ void render_kernel(Canvas *canvas)
     float hit_distance;
     Vector<float> ray_collide_position;
     Vector<float> ray_reflect_direction;
-    float hit_reflectiveness;
+    Vector<float> hit_normal;
+
+    float hit_metallic;
+    float hit_hardness;
+    float hit_diffuse;
+    float hit_specular;
+
     float ray_energy = 1.f;
 
     for (int reflectionIndex = 0; reflectionIndex <= MAX_REFLECTIONS; reflectionIndex++) {
         Vector<int> bounce_color;
 
-        // Check for intersection with each triangle
         bool hit_object = false;
+        bool hit_sky = false;
         float min_hit_distance = C_INFINITY;
 
-        RenderObject *closest_renderobject;
+        RenderObject *closest_renderobject = NULL;
 
+        // Check for intersection with each RenderObject
         for (int index = 0; index < canvas->num_renderobjects; index++) {
             RenderObject *test_hit = canvas->scene_renderobjects[index];
             if (test_hit->is_visible(ray_origin,
                                      ray_direction,
                                      ray_collide_position,
                                      ray_reflect_direction,
+                                     hit_normal,
                                      hit_distance,
+
                                      bounce_color,
-                                     hit_reflectiveness)) {
+                                     hit_metallic,
+                                     hit_hardness,
+                                     hit_diffuse,
+                                     hit_specular)) {
                 hit_object = true;
                 if (hit_distance < min_hit_distance) {
                     min_hit_distance = hit_distance;
@@ -129,25 +146,71 @@ __global__ void render_kernel(Canvas *canvas)
                                              ray_direction,
                                              ray_collide_position,
                                              ray_reflect_direction,
+                                             hit_normal,
                                              hit_distance,
+
                                              bounce_color,
-                                             hit_reflectiveness);
+                                             hit_metallic,
+                                             hit_hardness,
+                                             hit_diffuse,
+                                             hit_specular);
 
             ray_origin = ray_collide_position;
             ray_direction = ray_reflect_direction;
         } else {
             if (ray_direction.y < 0) {
-                get_ground_color(&bounce_color, &ray_origin, ray_direction, canvas);
-                hit_reflectiveness = 0.f;
+                get_ground_color(
+                    &bounce_color, &ray_origin, ray_direction, ray_collide_position, canvas);
+                hit_normal = Vector<float>{0, 1, 0};
+                ray_reflect_direction =
+                    !(ray_direction + !hit_normal * (-ray_direction % hit_normal) * 2);
+
+                ray_origin = ray_collide_position;
+                ray_direction = ray_reflect_direction;
+
+                hit_metallic = 0.f;
+                hit_hardness = 0.f;
+                hit_diffuse = GROUND_DIFFUSE;
+                hit_specular = 0.f;
             } else {
                 get_sky_color(&bounce_color, ray_direction, canvas);
-                hit_reflectiveness = 0.f;
+
+                hit_sky = true;
+                hit_metallic = 0.f;
+                hit_hardness = 0.f;
+                hit_specular = 0.f;
             }
         }
 
+        // Compute lighting
+        if (!hit_sky) {
+            // Compute sum of diffuse and specular for all lights in scene
+            float diffuse_sum = 0;
+            float specular_sum = 0;
+            Vector<int> light_color_sum = Vector<int>(0, 0, 0);
+
+            float light_color_average_divisor = (1.f / (float)canvas->num_lights);
+            for (int light_index = 0; light_index < canvas->num_lights; light_index++) {
+                Point *current_light = canvas->scene_lights[light_index];
+
+                diffuse_sum += current_light->diffuse_at_point(hit_normal, ray_collide_position);
+                specular_sum +=
+                    current_light->specular_at_point(ray_collide_position, ray_direction);
+
+                light_color_sum.x += int(current_light->color.x * light_color_average_divisor);
+                light_color_sum.y += int(current_light->color.y * light_color_average_divisor);
+                light_color_sum.z += int(current_light->color.z * light_color_average_divisor);
+            }
+
+            // Phong lighting
+            bounce_color = (bounce_color * AMBIENT_LIGHT) +
+                           (bounce_color * diffuse_sum * hit_diffuse) +
+                           (light_color_sum * pow(specular_sum, hit_hardness) * hit_specular);
+        }
+
         // Update color and ray energy
-        out_color = out_color + (bounce_color * (ray_energy * (1 - hit_reflectiveness)));
-        ray_energy *= hit_reflectiveness;
+        out_color = out_color + (bounce_color * (ray_energy * (1 - hit_metallic)));
+        ray_energy *= hit_metallic;
 
         if (ray_energy <= 0.f) {
             break;
@@ -155,36 +218,48 @@ __global__ void render_kernel(Canvas *canvas)
     }
 
     // Save color data
-    canvas->canvas[index] = out_color.x;
-    canvas->canvas[index + 1] = out_color.y;
-    canvas->canvas[index + 2] = out_color.z;
+    canvas->canvas[index] = max(0, min(255, out_color.x));
+    canvas->canvas[index + 1] = max(0, min(255, out_color.y));
+    canvas->canvas[index + 2] = max(0, min(255, out_color.z));
     // Alpha
     canvas->canvas[index + 3] = 255;
 }
 
 __global__ void scene_setup_kernel(Canvas *canvas)
 {
-    // Initialize triangles
+    // Initialize RenderObjects
     List<RenderObject *> renderobjects;
 
     // Octahedron
     Octahedron *oct = new Octahedron(Vector<float>{0, 1, 0}, 1.0f);
     oct->extend_list(&renderobjects);
 
-    // Initialize Spheres
-    renderobjects.add(new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 0}, 0.95f));
+    // Spheres
     renderobjects.add(
-        new Sphere(Vector<float>{-1.25, 0.8, 0}, 0.25f, Vector<int>{255, 0, 0}, 0.5f));
+        new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 255}, 0.25f, 99, 0.9f, 1, 0));
+    renderobjects.add(new Sphere(
+        Vector<float>{-0.75, 0.2, 0}, 0.25f, Vector<int>{255, 165, 0}, 0.05f, 99, 0.9f, 1, 0));
 
-    // Copy triangles to device
+    // Copy RenderObjects to canvas
     canvas->scene_renderobjects =
         (RenderObject **)malloc(sizeof(RenderObject *) * renderobjects.size());
-    //cudaMallocManaged(&(canvas->scene_triangles), sizeof(Triangle) * host_triangles.size());
     cudaMemcpyAsync(canvas->scene_renderobjects,
                     renderobjects.getArray(),
                     sizeof(RenderObject *) * renderobjects.size(),
                     cudaMemcpyDeviceToDevice);
     canvas->num_renderobjects = renderobjects.size();
+
+    // Initialize Lights
+    List<Point *> lights;
+    lights.add(new Point(Vector<float>(0, 2.5, 0), Vector<int>(255, 255, 255)));
+
+    // Copy Lights to canvas
+    canvas->scene_lights = (Point **)malloc(sizeof(Point *) * lights.size());
+    cudaMemcpyAsync(canvas->scene_lights,
+                    lights.getArray(),
+                    sizeof(Point *) * lights.size(),
+                    cudaMemcpyDeviceToDevice);
+    canvas->num_lights = lights.size();
 }
 
 void Canvas::scene_setup()

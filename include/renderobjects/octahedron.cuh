@@ -31,9 +31,16 @@ class Octahedron : public RenderObject
         gen_triangles();
     }
 
-    __hd__
-    Octahedron(const Vector<float> &center, float size, const Vector<int> &color, float metallic)
-        : center(center), size(size), RenderObject(color, metallic)
+    __hd__ Octahedron(const Vector<float> &center,
+                      float size,
+                      const Vector<int> &color,
+                      float metallic,
+                      float hardness,
+                      float diffuse,
+                      float specular,
+                      float roughness)
+        : center(center), size(size),
+          RenderObject(color, metallic, hardness, diffuse, specular, roughness)
     {
         gen_triangles();
     }
@@ -45,25 +52,94 @@ class Octahedron : public RenderObject
         Vector<float> z = Vector<float>{0, 0, size};
 
         // Bottom Half
-        tris[0] = new Triangle{center - y, center - x, center + z, color, metallic};
-        tris[1] = new Triangle{center - y, center - z, center - x, color, metallic};
-        tris[2] = new Triangle{center - y, center + x, center - z, color, metallic};
-        tris[3] = new Triangle{center - y, center + z, center + x, color, metallic};
+        tris[0] = new Triangle{center - y,
+                               center - x,
+                               center + z,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
+        tris[1] = new Triangle{center - y,
+                               center - z,
+                               center - x,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
+        tris[2] = new Triangle{center - y,
+                               center + x,
+                               center - z,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
+        tris[3] = new Triangle{center - y,
+                               center + z,
+                               center + x,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
 
         // Top Half
-        tris[4] = new Triangle{center + y, center + z, center - x, color, metallic};
-        tris[5] = new Triangle{center + y, center + z, center + x, color, metallic};
-        tris[6] = new Triangle{center + y, center - z, center + x, color, metallic};
-        tris[7] = new Triangle{center + y, center - x, center - z, color, metallic};
+        tris[4] = new Triangle{center + y,
+                               center + z,
+                               center - x,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
+        tris[5] = new Triangle{center + y,
+                               center + z,
+                               center + x,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
+        tris[6] = new Triangle{center + y,
+                               center - z,
+                               center + x,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
+        tris[7] = new Triangle{center + y,
+                               center - x,
+                               center - z,
+                               color,
+                               metallic,
+                               hardness,
+                               diffuse,
+                               specular,
+                               roughness};
     }
 
     __hd__ bool is_visible(const Vector<float> &ray_origin,
                            const Vector<float> &ray,
                            Vector<float> &ray_collide_position,
                            Vector<float> &ray_reflect_direction,
+                           Vector<float> &hit_normal,
                            float &hit_distance,
-                           Vector<int> &color,
-                           float &object_metallic) const
+
+                           Vector<int> &object_color,
+                           float &object_metallic,
+                           float &object_hardness,
+                           float &object_diffuse,
+                           float &object_specular) const
     {
         return false;
     }

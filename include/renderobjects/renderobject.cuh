@@ -13,11 +13,26 @@
 class RenderObject
 {
   public:
-    __hd__ RenderObject() : color(255, 255, 255), metallic(1)
+    Vector<int> color;
+    float metallic;
+    float hardness;
+    float diffuse;
+    float specular;
+    float roughness;
+
+    __hd__ RenderObject()
+        : color(255, 255, 255), metallic(1), hardness(1), diffuse(1), specular(1), roughness(0)
     {
     }
 
-    __hd__ RenderObject(Vector<int> color, float metallic) : color(color), metallic(metallic)
+    __hd__ RenderObject(Vector<int> color,
+                        float metallic,
+                        float hardness,
+                        float diffuse,
+                        float specular,
+                        float roughness)
+        : color(color), metallic(metallic), hardness(hardness), diffuse(diffuse),
+          specular(specular), roughness(roughness)
     {
     }
 
@@ -25,9 +40,14 @@ class RenderObject
                                    const Vector<float> &ray,
                                    Vector<float> &ray_collide_position,
                                    Vector<float> &ray_reflect_direction,
+                                   Vector<float> &hit_normal,
                                    float &hit_distance,
-                                   Vector<int> &color,
-                                   float &object_metallic) const = 0;
+
+                                   Vector<int> &object_color,
+                                   float &object_metallic,
+                                   float &object_hardness,
+                                   float &object_diffuse,
+                                   float &object_specular) const = 0;
 
     void set_color(const Vector<int> &v)
     {
@@ -39,8 +59,25 @@ class RenderObject
         metallic = v;
     }
 
-    Vector<int> color;
-    float metallic;
+    void set_hardness(float v)
+    {
+        hardness = v;
+    }
+
+    void set_diffuse(float v)
+    {
+        diffuse = v;
+    }
+
+    void set_specular(float v)
+    {
+        specular = v;
+    }
+
+    void set_roughness(float v)
+    {
+        roughness = v;
+    }
 };
 
 #endif

@@ -15,6 +15,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
+#include "light/point.cuh"
 #include "renderobjects/octahedron.cuh"
 #include "renderobjects/sphere.cuh"
 #include "renderobjects/triangle.cuh"
@@ -48,9 +49,13 @@ class Canvas
     // Viewport
     Vector<float> *viewport_origin;
 
-    // Scene Triangles
+    // Scene RenderObjects
     int num_renderobjects;
     RenderObject **scene_renderobjects;
+
+    // Scene Lights
+    int num_lights;
+    Point **scene_lights;
 
     // Constructors
     Canvas(int w, int h, int c)

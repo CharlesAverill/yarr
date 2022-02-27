@@ -10,3 +10,9 @@
 
 // Max number of reflections per ray
 #define MAX_REFLECTIONS 100
+
+// Ambient lighting in scene
+#define AMBIENT_LIGHT 0.3f
+
+// Diffuse of ground plane
+#define GROUND_DIFFUSE 0.8f

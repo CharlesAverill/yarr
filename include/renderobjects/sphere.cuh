@@ -23,8 +23,16 @@ class Sphere : public RenderObject
     {
     }
 
-    __hd__ Sphere(const Vector<float> center, float radius, Vector<int> color, float metallic)
-        : center(center), radius(radius), RenderObject(color, metallic)
+    __hd__ Sphere(const Vector<float> center,
+                  float radius,
+                  Vector<int> color,
+                  float metallic,
+                  float hardness,
+                  float diffuse,
+                  float specular,
+                  float roughness)
+        : center(center), radius(radius),
+          RenderObject(color, metallic, hardness, diffuse, specular, roughness)
     {
     }
 
@@ -35,29 +43,38 @@ class Sphere : public RenderObject
                            const Vector<float> &ray,
                            Vector<float> &ray_collide_position,
                            Vector<float> &ray_reflect_direction,
+                           Vector<float> &hit_normal,
                            float &hit_distance,
-                           Vector<int> &color,
-                           float &object_metallic) const
+
+                           Vector<int> &object_color,
+                           float &object_metallic,
+                           float &object_hardness,
+                           float &object_diffuse,
+                           float &object_specular) const
     {
-        Vector<float> p = this->center - ray_origin;
-        float threshold = sqrt(p % p - this->radius * this->radius);
-        float b = p % ray;
+        const Vector<float> p = center - ray_origin;
+        const float threshold = std::sqrt(p % p - radius * radius);
+        const float b = p % ray;
 
         if (b > threshold) {
-            float s = (p % p) - (b * b);
-            float t = (this->radius * this->radius) - (s * s);
+            const float s = std::sqrt(p % p - b * b);
+            const float t = std::sqrt(radius * radius - s * s);
             hit_distance = b - t;
 
-            if (hit_distance < HIT_PRECISION) {
+            if (hit_distance < HIT_PRECISION)
                 return false;
-            }
 
             ray_collide_position = ray_origin + ray * hit_distance;
-            Vector<float> normal = !(-p + ray * hit_distance);
+            const Vector<float> normal = !(-p + ray * hit_distance);
             ray_reflect_direction = !(ray + !normal * (!normal % -ray) * 2);
 
-            color = this->color;
-            object_metallic = this->metallic;
+            object_color = color;
+            object_metallic = metallic;
+            object_hardness = hardness;
+            object_diffuse = diffuse;
+            object_specular = specular;
+
+            hit_normal = normal;
 
             return true;
         }
