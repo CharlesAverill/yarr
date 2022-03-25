@@ -75,14 +75,13 @@ class Sphere : public RenderObject
                 ray_reflect_direction =
                     !(ray_reflect_direction + !normal * (!normal % -ray_reflect_direction) * 2);
             }
+            hit_normal = !(ray_reflect_direction - ray);
 
             object_color = color;
             object_metallic = metallic;
             object_hardness = hardness;
             object_diffuse = diffuse;
             object_specular = specular;
-
-            //hit_normal = normal;
 
             return true;
         }

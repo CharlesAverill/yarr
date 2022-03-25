@@ -205,9 +205,14 @@ template <typename T> class List
         return false;
     }
 
-    __hd__ const T *get(int index) const
+    __hd__ T *get(int index) const
     {
         return (index >= 0 && index < this->_size) ? (this->_array + index) : NULL;
+    }
+
+    __hd__ T back()
+    {
+        return *get(_size - 1);
     }
 
     __hd__ bool set(const T &newValue, int index)

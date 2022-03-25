@@ -8,6 +8,8 @@
 #include <SFML/Graphics.h>
 #include <math.h>
 #include <stdio.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "canvas.cuh"
 #include "input.cuh"
@@ -23,7 +25,7 @@ sfRenderWindow *csfml_setup(unsigned int width, unsigned int height)
 
     sfRenderWindow *window = sfRenderWindow_create(mode, "YARR", sfResize | sfClose, NULL);
     if (!window) {
-        printf("Couldn't initialize SFML window");
+        fprintf(stderr, "Couldn't initialize SFML window");
         exit(1);
     }
 
@@ -36,7 +38,6 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
 {
     sfEvent event;
     sfTexture *texture;
-    sfTexture *texture2;
     sfSprite *sprite;
 
     texture = sfTexture_create(canvas->width, canvas->height);
@@ -52,6 +53,7 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
         input_loop(window, &event);
 
         // Update Scene
+        //*(canvas->viewport_origin) = *(canvas->viewport_origin) + Vector<float>(0.1f, 0, 0);
 
         // Render output
         canvas->render();
@@ -72,7 +74,7 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
 int main(int argc, char *argv[])
 {
     // Deal with input arguments
-    char *output_fn;
+    const char *output_fn;
     if (argc < 2) {
         output_fn = "yarr.ppm";
     } else {
@@ -112,7 +114,7 @@ int main(int argc, char *argv[])
     render_loop(canvas, window);
 
     // Save last render to PPM
-    printf("Saving last render to %s\n", output_fn);
+    fprintf(stdout, "Saving last render to %s\n", output_fn);
     canvas->save_to_ppm(output_fn);
 
     // Free memory

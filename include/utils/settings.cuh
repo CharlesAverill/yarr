@@ -5,6 +5,9 @@
  * @brief Description
 */
 
+// Framerate
+#define TARGET_FPS 60
+
 // Distance determining whether a ray hits a triangle or not
 #define HIT_PRECISION 0.001f
 
@@ -21,8 +24,14 @@
 #define GROUND_SPECULAR 0.f
 
 // Anti-aliasing
-#define DO_ANTIALISING 1
-#define ANTIALIASING_PRECISION 16
+#define DO_ANTIALIASING true
+#define ANTIALIASING_SAMPLES 16
+
+// Soft Shading
+#define SOFT_SHADOW_FACTOR 15
+
+// Depth of field
+#define DOF 0.01f
 
 // RNG
 #define SEED 1234

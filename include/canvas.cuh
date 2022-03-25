@@ -62,6 +62,10 @@ class Canvas
     int num_lights;
     Point **scene_lights;
 
+    // Antialiasing Colors
+    int antialiasing_samples;
+    Vector<int> **antialiasing_colors_array;
+
     // Constructors
     Canvas(int w, int h, int c)
     {
@@ -91,7 +95,7 @@ class Canvas
     }
 
     // Save canvas to PPM file
-    int save_to_ppm(char *fn);
+    int save_to_ppm(const char *fn);
 
     void scene_setup();
     void host_setup(dim3 grid_size, dim3 block_size);

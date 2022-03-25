@@ -50,32 +50,32 @@ class RenderObject
                                    float &object_specular,
                                    const Vector<float> &random_offsets) const = 0;
 
-    void set_color(const Vector<int> &v)
+    __hd__ void set_color(const Vector<int> &v)
     {
         color = v;
     }
 
-    void set_metallic(float v)
+    __hd__ void set_metallic(float v)
     {
         metallic = v;
     }
 
-    void set_hardness(float v)
+    __hd__ void set_hardness(float v)
     {
         hardness = v;
     }
 
-    void set_diffuse(float v)
+    __hd__ void set_diffuse(float v)
     {
         diffuse = v;
     }
 
-    void set_specular(float v)
+    __hd__ void set_specular(float v)
     {
         specular = v;
     }
 
-    void set_roughness(float v)
+    __hd__ void set_roughness(float v)
     {
         roughness = v;
     }
