@@ -10,6 +10,9 @@
 
 #include <SFML/Graphics.h>
 
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/imgcodecs.hpp>
+
 #include <stdio.h>
 #include <time.h>
 
@@ -62,6 +65,12 @@ class Canvas
     int num_lights;
     Point **scene_lights;
 
+    // Ground texture
+    int ground_texture_width;
+    int ground_texture_height;
+    int ground_texture_channels;
+    sfUint8 *ground_texture;
+
     // Antialiasing Colors
     int antialiasing_samples;
     Vector<int> **antialiasing_colors_array;
@@ -79,7 +88,7 @@ class Canvas
         channels = c;
         size = w * h * c;
 
-        cudaMallocManaged(&canvas, width * height * channels * 4);
+        cudaMallocManaged(&canvas, width * height * channels);
 
         cudaMallocManaged(&X, sizeof(Vector<float>));
         cudaMallocManaged(&Y, sizeof(Vector<float>));
@@ -92,10 +101,41 @@ class Canvas
         Z->init(0, 0, 1);
 
         viewport_origin->init(0, 1, -4);
+
+        // Ground texture setup
+        if (GROUND_TYPE == GT_TEXTURE) {
+            cv::Mat tempTexture = cv::imread(GROUND_TEXTURE_PATH, cv::IMREAD_COLOR);
+            if (tempTexture.data == NULL) {
+                fprintf(stderr,
+                        "[canvas::init] Error reading ground texture \"%s\"\n",
+                        GROUND_TEXTURE_PATH);
+                exit(1);
+            }
+
+            // Read from OpenCV struct to color array
+            ground_texture_width = tempTexture.size().width;
+            ground_texture_height = tempTexture.size().height;
+            ground_texture_channels = tempTexture.channels();
+            cudaMallocManaged(&ground_texture,
+                              ground_texture_width * ground_texture_height *
+                                  ground_texture_channels);
+
+            for (int i = 0; i < ground_texture_width; i++) {
+                for (int j = 0; j < ground_texture_height; j++) {
+                    int index = ground_texture_channels * (i * ground_texture_width + j);
+
+                    ground_texture[index + 0] = tempTexture.data[index + 0];
+                    ground_texture[index + 1] = tempTexture.data[index + 1];
+                    ground_texture[index + 2] = tempTexture.data[index + 2];
+                    ground_texture[index + 3] = tempTexture.data[index + 3];
+                }
+            }
+        }
     }
 
     // Save canvas to PPM file
     int save_to_ppm(const char *fn);
+    int save_to_ppm(const char *fn, sfUint8 *to_save, int width, int height, int channels);
 
     void scene_setup();
     void host_setup(dim3 grid_size, dim3 block_size);

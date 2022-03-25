@@ -25,7 +25,7 @@ sfRenderWindow *csfml_setup(unsigned int width, unsigned int height)
 
     sfRenderWindow *window = sfRenderWindow_create(mode, "YARR", sfResize | sfClose, NULL);
     if (!window) {
-        fprintf(stderr, "Couldn't initialize SFML window");
+        fprintf(stderr, "[csfml_setup] Couldn't initialize SFML window");
         exit(1);
     }
 
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     render_loop(canvas, window);
 
     // Save last render to PPM
-    fprintf(stdout, "Saving last render to %s\n", output_fn);
+    fprintf(stdout, "[main] Saving last render to %s\n", output_fn);
     canvas->save_to_ppm(output_fn);
 
     // Free memory

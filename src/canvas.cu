@@ -10,9 +10,7 @@
 int Canvas::save_to_ppm(const char *fn)
 {
     // Open file
-    FILE *fp;
-    fp = fopen(fn, "w+");
-
+    FILE *fp = fopen(fn, "w+");
     if (fp == NULL) {
         return 1;
     }
@@ -30,6 +28,34 @@ int Canvas::save_to_ppm(const char *fn)
         }
 
         fprintf(fp, "%d ", (int)this->canvas[i]);
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+int Canvas::save_to_ppm(const char *fn, sfUint8 *to_save, int width, int height, int channels)
+{
+    // Open file
+    FILE *fp = fopen(fn, "w+");
+    if (fp == NULL) {
+        return 1;
+    }
+
+    // Store canvas size
+    int size = width * height * channels;
+
+    // Write header
+    fprintf(fp, "P3 %d %d 255 ", width, height);
+
+    for (int i = 0; i < size; i++) {
+        // Skip the Alpha channel
+        if (i > 0 && (i + 1) % 4 == 0) {
+            continue;
+        }
+
+        fprintf(fp, "%d ", (int)to_save[i]);
     }
 
     fclose(fp);
@@ -64,10 +90,49 @@ __device__ void get_ground_color(Vector<int> *color,
 
     ray_collide_position = Vector<float>(x, 0, z);
 
-    if ((int)abs(floor(x)) % 2 == (int)abs(floor(z)) % 2) {
-        canvas->hex_int_to_color_vec(color, 0xFF0000);
-    } else {
-        canvas->hex_int_to_color_vec(color, 0xFFFFFF);
+    switch (GROUND_TYPE) {
+    case GT_PLAIN:
+        canvas->hex_int_to_color_vec(color, GROUND_PRIMARY_COLOR);
+        break;
+    case GT_CHECKER:
+        if ((int)abs(floor(x)) % 2 == (int)abs(floor(z)) % 2) {
+            canvas->hex_int_to_color_vec(color, GROUND_PRIMARY_COLOR);
+        } else {
+            canvas->hex_int_to_color_vec(color, GROUND_SECONDARY_COLOR);
+        }
+        break;
+    case GT_HSTRIPE:
+        if ((int)abs(floor(z)) % 2 == 0) {
+            canvas->hex_int_to_color_vec(color, GROUND_PRIMARY_COLOR);
+        } else {
+            canvas->hex_int_to_color_vec(color, GROUND_SECONDARY_COLOR);
+        }
+        break;
+    case GT_VSTRIPE:
+        if ((int)abs(floor(x)) % 2 == 0) {
+            canvas->hex_int_to_color_vec(color, GROUND_PRIMARY_COLOR);
+        } else {
+            canvas->hex_int_to_color_vec(color, GROUND_SECONDARY_COLOR);
+        }
+        break;
+    case GT_RINGS:
+        if ((int)sqrt(pow(abs(x), 2) + pow(abs(z), 2)) % 2 == 0) {
+            canvas->hex_int_to_color_vec(color, GROUND_PRIMARY_COLOR);
+        } else {
+            canvas->hex_int_to_color_vec(color, GROUND_SECONDARY_COLOR);
+        }
+        break;
+    case GT_TEXTURE:
+        int texture_x = abs((int)(x * 100) + 1000) % canvas->ground_texture_width;
+        int texture_z = abs((int)(z * 100) + 1000) % canvas->ground_texture_height;
+
+        int color_start_idx = (texture_x * canvas->ground_texture_width + texture_z) *
+                              canvas->ground_texture_channels;
+
+        color->init(canvas->ground_texture[color_start_idx + 0],
+                    canvas->ground_texture[color_start_idx + 1],
+                    canvas->ground_texture[color_start_idx + 2]);
+        break;
     }
 }
 
@@ -259,11 +324,11 @@ __global__ void antialiasing_kernel(Canvas *canvas, int x, int y, curandState ra
 __global__ void render_kernel(Canvas *canvas)
 {
     // Kernel row and column based on their thread and block indices
-    int x = (threadIdx.x + blockIdx.x * blockDim.x) - (canvas->width / 2);
-    int y = (threadIdx.y + blockIdx.y * blockDim.y) - (canvas->height / 2);
+    int x = (threadIdx.x + blockIdx.x * blockDim.x) - (canvas->height / 2);
+    int y = (threadIdx.y + blockIdx.y * blockDim.y) - (canvas->width / 2);
     int color_index = threadIdx.z + blockIdx.z * blockDim.z;
     // The 1D index of `canvas` given our 3D information
-    int index = ((y + (canvas->width / 2)) * canvas->height * canvas->channels) +
+    int index = ((y + (canvas->width / 2)) * canvas->width * canvas->channels) +
                 ((x + (canvas->height / 2)) * canvas->channels) + color_index;
 
     // Init RNG
@@ -478,14 +543,20 @@ __global__ void scene_setup_kernel(Canvas *canvas)
     // Spheres
     renderobjects.add(
         new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 255}, 0.4f, 99, 0.9f, 1, 0));
-    renderobjects.add(new Sphere(
-        Vector<float>{-0.75, 0.2, -0.5}, 0.25f, Vector<int>{255, 165, 0}, 0.05f, 99, 0.9f, 1, 0.5));
+    renderobjects.add(new Sphere(Vector<float>{-0.75, 0.35, -0.5},
+                                 0.25f,
+                                 Vector<int>{255, 165, 0},
+                                 0.05f,
+                                 99,
+                                 0.9f,
+                                 1,
+                                 0.5));
 
     // Copy RenderObjects to canvas
     canvas->scene_renderobjects =
         (RenderObject **)malloc(sizeof(RenderObject *) * renderobjects.size());
     if (canvas->scene_renderobjects == NULL) {
-        printf("Failed to allocate memory for scene RenderObjects\n");
+        printf("[scene_setup_kernel] Failed to allocate memory for scene RenderObjects\n");
         return;
     }
     cudaMemcpyAsync(canvas->scene_renderobjects,
@@ -501,7 +572,7 @@ __global__ void scene_setup_kernel(Canvas *canvas)
     // Copy Lights to canvas
     canvas->scene_lights = (Point **)malloc(sizeof(Point *) * lights.size());
     if (canvas->scene_lights == NULL) {
-        printf("Failed to allocate memory for scene Lights\n");
+        printf("[scene_setup_kernel] Failed to allocate memory for scene Lights\n");
         return;
     }
     cudaMemcpyAsync(canvas->scene_lights,
@@ -515,7 +586,7 @@ __global__ void scene_setup_kernel(Canvas *canvas)
     canvas->antialiasing_colors_array = (Vector<int> **)malloc(
         sizeof(Vector<int> *) * canvas->antialiasing_samples * canvas->width * canvas->height);
     if (canvas->antialiasing_colors_array == NULL) {
-        printf("Failed to allocate memory for antialiasing array\n");
+        printf("[scene_setup_kernel] Failed to allocate memory for antialiasing array\n");
         return;
     }
     for (int i = 0; i < canvas->antialiasing_samples; i++) {
