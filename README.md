@@ -42,4 +42,5 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
       ..
 
 make -j$(nproc)
+make install
 ```
