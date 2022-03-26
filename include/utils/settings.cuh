@@ -29,7 +29,7 @@ enum CAMERA_MOVEMENT_TYPES {
     CM_ORBIT  // Camera orbits (0, 0) with a distance of sqrt(CAMERA_X^2 + CAMERA_Z^2)
 };
 
-#define CAMERA_MOTION_TYPE CM_STILL
+#define CAMERA_MOTION_TYPE CM_ORBIT
 
 #define CAMERA_X 0
 #define CAMERA_Y  1

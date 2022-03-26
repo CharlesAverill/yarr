@@ -4,7 +4,21 @@ A CUDA-accelerated ray-tracing renderer, with relativistic effects planned.
 
 Built with the help of [Nikolaus Mayer](https://github.com/nikolausmayer/raytracing-from-scratch/)
 
+<details>
+    <summary>Progress Images</summary>
+
+    ## Sky and Ground
+    ![media/00_SkyGround.png](media/00_SkyGround.png)
+</details>
+
 ## Installation
+
+### CSFML
+
+We use SFML with C bindings (CSFML) to open a window and display the renders
+
+[SFML Installation](https://www.sfml-dev.org/tutorials/2.5/start-linux.php)
+[CSFML Bindings](https://www.sfml-dev.org/download/csfml/)
 
 ### OpenCV
 
