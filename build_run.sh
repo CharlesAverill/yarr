@@ -7,11 +7,12 @@ if cmake .. ; then
     if make -j$(nproc) ; then
         cd ../bin
         echo "-----EXECUTING-----"
-        rm $1
-        rm "$1.png"
+        rm "$1"
+        rm "$1.mp4"
         if ./yarr $1 ; then
-            convert $1 "$1.png"
-            # eog "$1.png"
+            echo "-----CONVERTING----"
+            ffmpeg -hide_banner -loglevel error -y -i "$1" "$1.mp4" > /dev/null
+            echo "Done"
         fi
     else
         echo "-----MAKE FAILURE-----"

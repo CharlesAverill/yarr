@@ -16,19 +16,17 @@
 class Sphere : public RenderObject
 {
   public:
-    Vector<float> center;
     Vector<float> up;
     float radius;
 
     __hd__ Sphere();
 
-    __hd__ Sphere(const Vector<float> &center, float radius)
-        : center(center), radius(radius), RenderObject()
+    __hd__ Sphere(const Vector<float> &origin, float radius) : radius(radius), RenderObject(origin)
     {
         up = Vector<float>(0, 1, 0);
     }
 
-    __hd__ Sphere(const Vector<float> center,
+    __hd__ Sphere(const Vector<float> origin,
                   float radius,
                   Vector<int> color,
                   float metallic,
@@ -36,15 +34,15 @@ class Sphere : public RenderObject
                   float diffuse,
                   float specular,
                   float roughness)
-        : center(center), radius(radius),
-          RenderObject(color, metallic, hardness, diffuse, specular, roughness)
+        : radius(radius), RenderObject(color, metallic, hardness, diffuse, specular, roughness)
     {
+        this->origin = origin;
         up = Vector<float>(0, 1, 0);
     }
 
     __device__ void translate(Vector<float> translation)
     {
-        center = center + translation;
+        origin = origin + translation;
     }
 
     __device__ void rotate(RotationMatrix rotation)
@@ -66,7 +64,7 @@ class Sphere : public RenderObject
                            float &object_specular,
                            const Vector<float> &random_offsets) const
     {
-        const Vector<float> p = center - ray_origin;
+        const Vector<float> p = origin - ray_origin;
         const float threshold = std::sqrt(p % p - radius * radius);
         const float b = p % ray;
 

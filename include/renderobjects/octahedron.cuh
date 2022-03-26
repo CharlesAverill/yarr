@@ -18,7 +18,6 @@
 class Octahedron : public RenderObject
 {
   public:
-    Vector<float> center;
     float size;
 
     Triangle *tris[8];
@@ -29,12 +28,13 @@ class Octahedron : public RenderObject
 
     __hd__ Octahedron();
 
-    __hd__ Octahedron(const Vector<float> &center, float size) : center(center), size(size)
+    __hd__ Octahedron(const Vector<float> &origin, float size) : size(size)
     {
+        this->origin = origin;
         gen_triangles();
     }
 
-    __hd__ Octahedron(const Vector<float> &center,
+    __hd__ Octahedron(const Vector<float> &origin,
                       float size,
                       const Vector<int> &color,
                       float metallic,
@@ -42,9 +42,9 @@ class Octahedron : public RenderObject
                       float diffuse,
                       float specular,
                       float roughness)
-        : center(center), size(size),
-          RenderObject(color, metallic, hardness, diffuse, specular, roughness)
+        : size(size), RenderObject(color, metallic, hardness, diffuse, specular, roughness)
     {
+        this->origin = origin;
         gen_triangles();
     }
 
@@ -55,36 +55,36 @@ class Octahedron : public RenderObject
         z = Vector<float>{0, 0, size};
 
         // Bottom Half
-        tris[0] = new Triangle(center - y,
-                               center - x,
-                               center + z,
+        tris[0] = new Triangle(origin - y,
+                               origin - x,
+                               origin + z,
                                color,
                                metallic,
                                hardness,
                                diffuse,
                                specular,
                                roughness);
-        tris[1] = new Triangle{center - y,
-                               center - z,
-                               center - x,
+        tris[1] = new Triangle{origin - y,
+                               origin - z,
+                               origin - x,
                                color,
                                metallic,
                                hardness,
                                diffuse,
                                specular,
                                roughness};
-        tris[2] = new Triangle{center - y,
-                               center + x,
-                               center - z,
+        tris[2] = new Triangle{origin - y,
+                               origin + x,
+                               origin - z,
                                color,
                                metallic,
                                hardness,
                                diffuse,
                                specular,
                                roughness};
-        tris[3] = new Triangle{center - y,
-                               center + z,
-                               center + x,
+        tris[3] = new Triangle{origin - y,
+                               origin + z,
+                               origin + x,
                                color,
                                metallic,
                                hardness,
@@ -93,36 +93,36 @@ class Octahedron : public RenderObject
                                roughness};
 
         // Top Half
-        tris[4] = new Triangle{center + y,
-                               center + z,
-                               center - x,
+        tris[4] = new Triangle{origin + y,
+                               origin + z,
+                               origin - x,
                                color,
                                metallic,
                                hardness,
                                diffuse,
                                specular,
                                roughness};
-        tris[5] = new Triangle{center + y,
-                               center + x,
-                               center + z,
+        tris[5] = new Triangle{origin + y,
+                               origin + x,
+                               origin + z,
                                color,
                                metallic,
                                hardness,
                                diffuse,
                                specular,
                                roughness};
-        tris[6] = new Triangle{center + y,
-                               center - z,
-                               center + x,
+        tris[6] = new Triangle{origin + y,
+                               origin - z,
+                               origin + x,
                                color,
                                metallic,
                                hardness,
                                diffuse,
                                specular,
                                roughness};
-        tris[7] = new Triangle{center + y,
-                               center - x,
-                               center - z,
+        tris[7] = new Triangle{origin + y,
+                               origin - x,
+                               origin - z,
                                color,
                                metallic,
                                hardness,
@@ -142,9 +142,9 @@ class Octahedron : public RenderObject
     {
         for (int i = 0; i < 8; i++) {
             Triangle *curr = tris[i];
-            curr->init(rotation * (curr->point0 - center) + center,
-                       rotation * (curr->point1 - center) + center,
-                       rotation * (curr->point2 - center) + center,
+            curr->init(rotation * (curr->point0 - origin) + origin,
+                       rotation * (curr->point1 - origin) + origin,
+                       rotation * (curr->point2 - origin) + origin,
                        true);
         }
     }

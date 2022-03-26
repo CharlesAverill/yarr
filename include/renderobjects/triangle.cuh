@@ -55,6 +55,8 @@ class Triangle : public RenderObject
             point0 = p0;
             point1 = p1;
             point2 = p2;
+
+            origin = p0;
         }
 
         edge0 = p1 - p0;

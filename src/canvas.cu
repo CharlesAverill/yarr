@@ -349,7 +349,7 @@ __global__ void render_kernel(Canvas *canvas)
         Vector<int> out_color;
 
         // Initialize the ray
-        Vector<float> ray_origin = *(canvas->viewport_origin);
+        Vector<float> ray_origin = *(canvas->camera_pos);
         Vector<float> ray_direction =
             (*(canvas->get_X()) * float(x + (DO_ANTIALIASING) * (curand_uniform(&randState) - 1))) +
             (*(canvas->get_Y()) * float(y + (DO_ANTIALIASING) * (curand_uniform(&randState) - 1)) *
@@ -361,8 +361,8 @@ __global__ void render_kernel(Canvas *canvas)
         Vector<float> sensor_shift{(curand_uniform(&randState) - 0.5f) * DOF,
                                    (curand_uniform(&randState) - 0.5f) * DOF,
                                    0};
-        ray_origin = ray_origin + sensor_shift;
-        ray_direction = !(ray_direction - sensor_shift * 0.25f);
+        ray_origin = *(canvas->camera_orn) * (ray_origin + sensor_shift);
+        ray_direction = *(canvas->camera_orn) * !(ray_direction - sensor_shift * 0.25f);
 
         // Cast the ray
         Vector<float> ray_collide_position;
@@ -533,6 +533,12 @@ __global__ void render_kernel(Canvas *canvas)
 
 __global__ void update_kernel(Canvas *canvas, int frame)
 {
+    // Update camera
+    if (canvas->camera_pos_update_lambda != nullptr) {
+        canvas->camera_pos_update_lambda(frame, canvas);
+    }
+
+    // Update RenderObjects
     for (int i = 0; i < canvas->num_renderobjects; i++) {
         canvas->scene_renderobjects[i]->update(frame);
     }
@@ -550,7 +556,7 @@ __global__ void scene_setup_kernel(Canvas *canvas)
 
     // Octahedron
     Octahedron *oct = new Octahedron(Vector<float>{0, 1, 0}, 1);
-    oct->set_rotation_update([](int frame) {
+    oct->set_rotation_update([](int frame, RenderObject *obj) {
         float update_factor = C_PI / 100.f;
         return RotationMatrix(update_factor, update_factor, update_factor);
     });
@@ -559,14 +565,15 @@ __global__ void scene_setup_kernel(Canvas *canvas)
     // Spheres
     renderobjects.add(
         new Sphere(Vector<float>{1, 2, 0}, 0.5f, Vector<int>{0, 0, 255}, 0.4f, 99, 0.9f, 1, 0));
-    renderobjects.add(new Sphere(Vector<float>{-0.75, 0.35, -0.5},
-                                 0.25f,
-                                 Vector<int>{255, 165, 0},
-                                 0.05f,
-                                 99,
-                                 0.9f,
-                                 1,
-                                 0.5));
+    renderobjects.back()->set_update([](int frame, RenderObject *obj) {
+        obj->origin = Vector<float>(1, 0.1f * cosf(frame * 0.25f) + 2, 0);
+    });
+
+    renderobjects.add(new Sphere(
+        Vector<float>{-1, 0.35, -1}, 0.25f, Vector<int>{255, 165, 0}, 0.05f, 99, 0.9f, 1, 0.5));
+    renderobjects.back()->set_update([](int frame, RenderObject *obj) {
+        obj->origin = Vector<float>(sinf(frame * 0.25f), 0.35f, cosf(frame * 0.25f));
+    });
 
     // Copy RenderObjects to canvas
     canvas->scene_renderobjects =
@@ -599,6 +606,15 @@ __global__ void scene_setup_kernel(Canvas *canvas)
 
     // Antialiasing
     canvas->antialiasing_samples = DO_ANTIALIASING ? ANTIALIASING_SAMPLES : 1;
+
+    // Camera movement
+    canvas->camera_pos_update_lambda = [](int frame, Canvas *canvas) {
+        if (CAMERA_MOTION_TYPE == CM_STILL) {
+            canvas->camera_orn = new RotationMatrix(0, 0, 0);
+        } else if (CAMERA_MOTION_TYPE == CM_ORBIT) {
+            canvas->camera_orn = new RotationMatrix(0, C_PI * frame / 100.f, 0);
+        }
+    };
 }
 
 void Canvas::scene_setup()

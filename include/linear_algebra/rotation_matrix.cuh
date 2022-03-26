@@ -8,8 +8,6 @@
 #ifndef ROTATION_MATRIX_H
 #define ROTATION_MATRIX_H
 
-#include <math.h>
-
 #include "linear_algebra/vector.cuh"
 #include "utils/cuda_utils.cuh"
 

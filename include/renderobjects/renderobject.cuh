@@ -15,7 +15,6 @@
 
 class RenderObject
 {
-
   public:
     Vector<int> color;
     float metallic;
@@ -24,11 +23,21 @@ class RenderObject
     float specular;
     float roughness;
 
-    nvstd::function<Vector<float>(int)> translation_lambda = nullptr;
-    nvstd::function<RotationMatrix(int)> rotation_lambda = nullptr;
+    Vector<float> origin;
+
+    nvstd::function<void(int, RenderObject *)> update_lambda = nullptr;
+    nvstd::function<Vector<float>(int, RenderObject *)> translation_lambda = nullptr;
+    nvstd::function<RotationMatrix(int, RenderObject *)> rotation_lambda = nullptr;
 
     __hd__ RenderObject()
-        : color(255, 255, 255), metallic(1), hardness(1), diffuse(1), specular(1), roughness(0)
+        : color(255, 255, 255), origin(0, 0, 0), metallic(1), hardness(1), diffuse(1), specular(1),
+          roughness(0)
+    {
+    }
+
+    __hd__ RenderObject(Vector<float> origin)
+        : color(255, 255, 255), origin(origin), metallic(1), hardness(1), diffuse(1), specular(1),
+          roughness(0)
     {
     }
 
@@ -38,24 +47,31 @@ class RenderObject
                         float diffuse,
                         float specular,
                         float roughness)
-        : color(color), metallic(metallic), hardness(hardness), diffuse(diffuse),
+        : color(color), origin(0, 0, 0), metallic(metallic), hardness(hardness), diffuse(diffuse),
           specular(specular), roughness(roughness)
     {
     }
 
-    __device__ void set_updates(const nvstd::function<Vector<float>(int)> &t,
-                                const nvstd::function<RotationMatrix(int)> &r)
+    __device__ void set_updates(const nvstd::function<Vector<float>(int, RenderObject *)> &t,
+                                const nvstd::function<RotationMatrix(int, RenderObject *)> &r)
     {
         this->translation_lambda = t;
         this->rotation_lambda = r;
     }
 
-    __device__ void set_translation_update(const nvstd::function<Vector<float>(int)> &t)
+    __device__ void set_update(const nvstd::function<void(int, RenderObject *)> &u)
+    {
+        this->update_lambda = u;
+    }
+
+    __device__ void
+    set_translation_update(const nvstd::function<Vector<float>(int, RenderObject *)> &t)
     {
         this->translation_lambda = t;
     }
 
-    __device__ void set_rotation_update(const nvstd::function<RotationMatrix(int)> &r)
+    __device__ void
+    set_rotation_update(const nvstd::function<RotationMatrix(int, RenderObject *)> &r)
     {
         this->rotation_lambda = r;
     }
@@ -65,11 +81,15 @@ class RenderObject
 
     __device__ void update(int frame)
     {
-        if (this->translation_lambda != nullptr) {
-            this->translate(this->translation_lambda(frame));
-        }
-        if (this->rotation_lambda != nullptr) {
-            this->rotate(this->rotation_lambda(frame));
+        if (this->update_lambda != nullptr) {
+            this->update_lambda(frame, this);
+        } else {
+            if (this->translation_lambda != nullptr) {
+                this->translate(this->translation_lambda(frame, this));
+            }
+            if (this->rotation_lambda != nullptr) {
+                this->rotate(this->rotation_lambda(frame, this));
+            }
         }
     }
 
@@ -86,6 +106,11 @@ class RenderObject
                                    float &object_diffuse,
                                    float &object_specular,
                                    const Vector<float> &random_offsets) const = 0;
+
+    __hd__ void set_origin(const Vector<float> &v)
+    {
+        origin = v;
+    }
 
     __hd__ void set_color(const Vector<int> &v)
     {

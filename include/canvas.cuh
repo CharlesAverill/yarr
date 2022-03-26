@@ -55,7 +55,9 @@ class Canvas
     Vector<float> *Z;
 
     // Viewport
-    Vector<float> *viewport_origin;
+    Vector<float> *camera_pos;
+    RotationMatrix *camera_orn;
+    nvstd::function<void(int, Canvas *)> camera_pos_update_lambda = nullptr;
 
     // Scene RenderObjects
     int num_renderobjects;
@@ -94,13 +96,13 @@ class Canvas
         cudaMallocManaged(&Y, sizeof(Vector<float>));
         cudaMallocManaged(&Z, sizeof(Vector<float>));
 
-        cudaMallocManaged(&viewport_origin, sizeof(Vector<float>));
+        cudaMallocManaged(&camera_pos, sizeof(Vector<float>));
 
         X->init(0.002f, 0, 0);
         Y->init(0, 0.002f, 0);
         Z->init(0, 0, 1);
 
-        viewport_origin->init(0, 1, -4);
+        camera_pos->init(CAMERA_X, CAMERA_Y, CAMERA_Z);
 
         // Ground texture setup
         if (GROUND_TYPE == GT_TEXTURE) {

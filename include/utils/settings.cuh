@@ -22,6 +22,19 @@
 // Ambient lighting in scene
 #define AMBIENT_LIGHT 0.3f
 
+// Camera settings
+// Defines the movement of the camera
+enum CAMERA_MOVEMENT_TYPES {
+    CM_STILL, // Camera stays still
+    CM_ORBIT  // Camera orbits (0, 0) with a distance of sqrt(CAMERA_X^2 + CAMERA_Z^2)
+};
+
+#define CAMERA_MOTION_TYPE CM_STILL
+
+#define CAMERA_X 0
+#define CAMERA_Y  1
+#define CAMERA_Z -4
+
 // Ground settings
 #define GROUND_METALLIC 0.f
 #define GROUND_HARDNESS 0.f

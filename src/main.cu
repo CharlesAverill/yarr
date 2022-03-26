@@ -37,7 +37,7 @@ sfRenderWindow *csfml_setup(unsigned int width, unsigned int height)
     return window;
 }
 
-void render_loop(Canvas *canvas, sfRenderWindow *window)
+void render_loop(Canvas *canvas, sfRenderWindow *window, const char *output_fn)
 {
     int frame_number = 0;
 
@@ -46,7 +46,7 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
     sfSprite *sprite;
 
     cv::Mat frame(canvas->width, canvas->height, CV_8UC4, cv::Scalar(0, 0, 0));
-    cv::VideoWriter oVideoWriter("video.avi",
+    cv::VideoWriter oVideoWriter(output_fn,
                                  cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
                                  TARGET_FPS,
                                  cv::Size(canvas->width, canvas->height),
@@ -70,10 +70,11 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
 
         // Update Scene
         canvas->update(frame_number++);
-        //*(canvas->viewport_origin) = *(canvas->viewport_origin) + Vector<float>(0.1f, 0, 0);
 
         // Render output
         canvas->render();
+
+        // Append frame to output video
         for (int x = 0; x < canvas->width; x++) {
             for (int y = 0; y < canvas->height; y++) {
                 int index = canvas->channels * (x * canvas->width + y);
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
     // Deal with input arguments
     const char *output_fn;
     if (argc < 2) {
-        output_fn = "yarr.ppm";
+        output_fn = "yarr.avi";
     } else {
         output_fn = argv[1];
     }
@@ -140,13 +141,7 @@ int main(int argc, char *argv[])
     sfRenderWindow *window = csfml_setup(width, height);
 
     // Call render loop here
-    render_loop(canvas, window);
-
-    /*
-    // Save last render to PPM
-    fprintf(stdout, "[main] Saving last render to %s\n", output_fn);
-    canvas->save_to_ppm(output_fn);
-    */
+    render_loop(canvas, window, output_fn);
 
     // Free memory
     cudaFree(canvas);
