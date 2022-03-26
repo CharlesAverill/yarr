@@ -11,7 +11,7 @@ add_compile_definitions(YARR_ROOT="${CMAKE_SOURCE_DIR}/")
 add_compile_definitions(ASSETS_ROOT="${CMAKE_SOURCE_DIR}/assets/")
 
 # Debug flags
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G")
+# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G")
 
 # Headers
 include_directories("${CMAKE_SOURCE_DIR}/include")
