@@ -49,6 +49,7 @@ Built with the help of [Nikolaus Mayer](https://github.com/nikolausmayer/raytrac
 We use SFML with C bindings (CSFML) to open a window and display the renders
 
 [SFML Installation](https://www.sfml-dev.org/tutorials/2.5/start-linux.php)
+
 [CSFML Bindings](https://www.sfml-dev.org/download/csfml/)
 
 ### OpenCV
