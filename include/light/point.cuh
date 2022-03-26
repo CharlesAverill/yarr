@@ -8,8 +8,8 @@
 #ifndef POINT_H
 #define POINT_H
 
+#include "linear_algebra/vector.cuh"
 #include "utils/utils.cuh"
-#include "utils/vector.cuh"
 
 class Point
 {

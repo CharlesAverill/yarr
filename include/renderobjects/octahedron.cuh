@@ -17,12 +17,15 @@
 
 class Octahedron : public RenderObject
 {
-
   public:
     Vector<float> center;
     float size;
 
     Triangle *tris[8];
+
+    Vector<float> x;
+    Vector<float> y;
+    Vector<float> z;
 
     __hd__ Octahedron();
 
@@ -47,12 +50,12 @@ class Octahedron : public RenderObject
 
     __hd__ void gen_triangles()
     {
-        Vector<float> x = Vector<float>{size, 0, 0};
-        Vector<float> y = Vector<float>{0, size, 0};
-        Vector<float> z = Vector<float>{0, 0, size};
+        x = Vector<float>{size, 0, 0};
+        y = Vector<float>{0, size, 0};
+        z = Vector<float>{0, 0, size};
 
         // Bottom Half
-        tris[0] = new Triangle{center - y,
+        tris[0] = new Triangle(center - y,
                                center - x,
                                center + z,
                                color,
@@ -60,7 +63,7 @@ class Octahedron : public RenderObject
                                hardness,
                                diffuse,
                                specular,
-                               roughness};
+                               roughness);
         tris[1] = new Triangle{center - y,
                                center - z,
                                center - x,
@@ -100,8 +103,8 @@ class Octahedron : public RenderObject
                                specular,
                                roughness};
         tris[5] = new Triangle{center + y,
-                               center + z,
                                center + x,
+                               center + z,
                                color,
                                metallic,
                                hardness,
@@ -128,6 +131,24 @@ class Octahedron : public RenderObject
                                roughness};
     }
 
+    __device__ void translate(Vector<float> translation)
+    {
+        for (int i = 0; i < 8; i++) {
+            tris[i]->translate(translation);
+        }
+    }
+
+    __device__ void rotate(RotationMatrix rotation)
+    {
+        for (int i = 0; i < 8; i++) {
+            Triangle *curr = tris[i];
+            curr->init(rotation * (curr->point0 - center) + center,
+                       rotation * (curr->point1 - center) + center,
+                       rotation * (curr->point2 - center) + center,
+                       true);
+        }
+    }
+
     __hd__ bool is_visible(const Vector<float> &ray_origin,
                            const Vector<float> &ray,
                            Vector<float> &ray_collide_position,
@@ -142,13 +163,46 @@ class Octahedron : public RenderObject
                            float &object_specular,
                            const Vector<float> &random_offsets) const
     {
-        return false;
+        int closest_index = -1;
+        float min_distance = C_INFINITY;
+        for (int i = 0; i < 8; i++) {
+            if (this->tris[i]->is_visible(ray_origin,
+                                          ray,
+                                          ray_collide_position,
+                                          ray_reflect_direction,
+                                          hit_normal,
+                                          hit_distance,
+                                          object_color,
+                                          object_metallic,
+                                          object_hardness,
+                                          object_diffuse,
+                                          object_specular,
+                                          random_offsets)) {
+                if (hit_distance < min_distance) {
+                    min_distance = hit_distance;
+                    closest_index = i;
+                }
+            }
+        }
+        return closest_index == -1 ? false
+                                   : this->tris[closest_index]->is_visible(ray_origin,
+                                                                           ray,
+                                                                           ray_collide_position,
+                                                                           ray_reflect_direction,
+                                                                           hit_normal,
+                                                                           hit_distance,
+                                                                           object_color,
+                                                                           object_metallic,
+                                                                           object_hardness,
+                                                                           object_diffuse,
+                                                                           object_specular,
+                                                                           random_offsets);
     }
 
     __hd__ void extend_list(List<RenderObject *> *list)
     {
         for (int i = 0; i < 8; i++) {
-            list->add((RenderObject *)tris[i]);
+            list->add((RenderObject *)this->tris[i]);
         }
     }
 };

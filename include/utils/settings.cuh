@@ -11,7 +11,7 @@
 // clang-format off
 
 // Framerate
-#define TARGET_FPS 60
+#define TARGET_FPS 10
 
 // Distance determining whether a ray hits a triangle or not
 #define HIT_PRECISION 0.001f
@@ -23,7 +23,7 @@
 #define AMBIENT_LIGHT 0.3f
 
 // Ground settings
-#define GROUND_METALLIC 0.1f
+#define GROUND_METALLIC 0.f
 #define GROUND_HARDNESS 0.f
 #define GROUND_DIFFUSE 0.8f
 #define GROUND_SPECULAR 0.1f

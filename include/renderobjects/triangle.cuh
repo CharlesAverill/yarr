@@ -16,14 +16,19 @@
 class Triangle : public RenderObject
 {
   public:
+    Vector<float> point0;
+    Vector<float> point1;
+    Vector<float> point2;
+    Vector<float> edge0;
+    Vector<float> edge1;
+    Vector<float> normal;
+
     __hd__ Triangle();
 
     __hd__ Triangle(const Vector<float> &p0, const Vector<float> &p1, const Vector<float> &p2)
         : point0(p0), point1(p1), point2(p2), RenderObject()
     {
-        edge0 = p1 - p0;
-        edge1 = p2 - p0;
-        normal = edge1 ^ edge0;
+        this->init(p0, p1, p2);
     }
 
     __hd__ Triangle(const Vector<float> &p0,
@@ -38,17 +43,37 @@ class Triangle : public RenderObject
         : point0(p0), point1(p1), point2(p2),
           RenderObject(color, metallic, hardness, diffuse, specular, roughness)
     {
+        this->init(p0, p1, p2);
+    }
+
+    __hd__ void init(const Vector<float> &p0,
+                     const Vector<float> &p1,
+                     const Vector<float> &p2,
+                     bool set_points = false)
+    {
+        if (set_points) {
+            point0 = p0;
+            point1 = p1;
+            point2 = p2;
+        }
+
         edge0 = p1 - p0;
         edge1 = p2 - p0;
         normal = edge1 ^ edge0;
     }
 
-    Vector<float> point0;
-    Vector<float> point1;
-    Vector<float> point2;
-    Vector<float> edge0;
-    Vector<float> edge1;
-    Vector<float> normal;
+    __device__ void translate(Vector<float> translation)
+    {
+        init(this->point0 + translation,
+             this->point1 + translation,
+             this->point2 + translation,
+             true);
+    }
+
+    __device__ void rotate(RotationMatrix rotation)
+    {
+        init(rotation * this->point0, rotation * this->point1, rotation * this->point2);
+    }
 
     __hd__ bool is_visible(const Vector<float> &ray_origin,
                            const Vector<float> &ray,

@@ -24,6 +24,7 @@
 #include <curand_kernel.h>
 
 #include "light/point.cuh"
+#include "linear_algebra/vector.cuh"
 #include "renderobjects/octahedron.cuh"
 #include "renderobjects/sphere.cuh"
 #include "renderobjects/triangle.cuh"
@@ -31,7 +32,6 @@
 #include "utils/list.cuh"
 #include "utils/settings.cuh"
 #include "utils/utils.cuh"
-#include "utils/vector.cuh"
 
 class Canvas
 {
@@ -142,6 +142,8 @@ class Canvas
 
     // Run render pipeline on GPU
     void render();
+
+    void update(int frame);
 
     // Convert an integer to a vector of colors
     __hd__ void hex_int_to_color_vec(Vector<int> *out, int in);

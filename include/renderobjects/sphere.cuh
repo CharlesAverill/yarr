@@ -16,11 +16,16 @@
 class Sphere : public RenderObject
 {
   public:
+    Vector<float> center;
+    Vector<float> up;
+    float radius;
+
     __hd__ Sphere();
 
     __hd__ Sphere(const Vector<float> &center, float radius)
         : center(center), radius(radius), RenderObject()
     {
+        up = Vector<float>(0, 1, 0);
     }
 
     __hd__ Sphere(const Vector<float> center,
@@ -34,10 +39,18 @@ class Sphere : public RenderObject
         : center(center), radius(radius),
           RenderObject(color, metallic, hardness, diffuse, specular, roughness)
     {
+        up = Vector<float>(0, 1, 0);
     }
 
-    Vector<float> center;
-    float radius;
+    __device__ void translate(Vector<float> translation)
+    {
+        center = center + translation;
+    }
+
+    __device__ void rotate(RotationMatrix rotation)
+    {
+        up = rotation * up;
+    }
 
     __hd__ bool is_visible(const Vector<float> &ray_origin,
                            const Vector<float> &ray,

@@ -8,10 +8,14 @@
 #ifndef RENDEROBJECT_H
 #define RENDEROBJECT_H
 
-#include "utils/vector.cuh"
+#include <nvfunctional>
+
+#include "linear_algebra/rotation_matrix.cuh"
+#include "linear_algebra/vector.cuh"
 
 class RenderObject
 {
+
   public:
     Vector<int> color;
     float metallic;
@@ -19,6 +23,9 @@ class RenderObject
     float diffuse;
     float specular;
     float roughness;
+
+    nvstd::function<Vector<float>(int)> translation_lambda = nullptr;
+    nvstd::function<RotationMatrix(int)> rotation_lambda = nullptr;
 
     __hd__ RenderObject()
         : color(255, 255, 255), metallic(1), hardness(1), diffuse(1), specular(1), roughness(0)
@@ -34,6 +41,36 @@ class RenderObject
         : color(color), metallic(metallic), hardness(hardness), diffuse(diffuse),
           specular(specular), roughness(roughness)
     {
+    }
+
+    __device__ void set_updates(const nvstd::function<Vector<float>(int)> &t,
+                                const nvstd::function<RotationMatrix(int)> &r)
+    {
+        this->translation_lambda = t;
+        this->rotation_lambda = r;
+    }
+
+    __device__ void set_translation_update(const nvstd::function<Vector<float>(int)> &t)
+    {
+        this->translation_lambda = t;
+    }
+
+    __device__ void set_rotation_update(const nvstd::function<RotationMatrix(int)> &r)
+    {
+        this->rotation_lambda = r;
+    }
+
+    __device__ virtual void translate(Vector<float> translation) = 0;
+    __device__ virtual void rotate(RotationMatrix rotation) = 0;
+
+    __device__ void update(int frame)
+    {
+        if (this->translation_lambda != nullptr) {
+            this->translate(this->translation_lambda(frame));
+        }
+        if (this->rotation_lambda != nullptr) {
+            this->rotate(this->rotation_lambda(frame));
+        }
     }
 
     __hd__ virtual bool is_visible(const Vector<float> &ray_origin,

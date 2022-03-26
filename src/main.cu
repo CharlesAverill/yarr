@@ -6,6 +6,9 @@
 */
 
 #include <SFML/Graphics.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
+
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
@@ -13,9 +16,9 @@
 
 #include "canvas.cuh"
 #include "input.cuh"
+#include "linear_algebra/vector.cuh"
 #include "utils/cuda_utils.cuh"
 #include "utils/utils.cuh"
-#include "utils/vector.cuh"
 
 #define BLOCK_SIZE 16
 
@@ -36,9 +39,22 @@ sfRenderWindow *csfml_setup(unsigned int width, unsigned int height)
 
 void render_loop(Canvas *canvas, sfRenderWindow *window)
 {
+    int frame_number = 0;
+
     sfEvent event;
     sfTexture *texture;
     sfSprite *sprite;
+
+    cv::Mat frame(canvas->width, canvas->height, CV_8UC4, cv::Scalar(0, 0, 0));
+    cv::VideoWriter oVideoWriter("video.avi",
+                                 cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+                                 TARGET_FPS,
+                                 cv::Size(canvas->width, canvas->height),
+                                 true);
+    if (!oVideoWriter.isOpened()) {
+        fprintf(stderr, "[render_loop] Failed to initialize video writer\n");
+        exit(1);
+    }
 
     texture = sfTexture_create(canvas->width, canvas->height);
     if (!texture) {
@@ -53,10 +69,22 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
         input_loop(window, &event);
 
         // Update Scene
+        canvas->update(frame_number++);
         //*(canvas->viewport_origin) = *(canvas->viewport_origin) + Vector<float>(0.1f, 0, 0);
 
         // Render output
         canvas->render();
+        for (int x = 0; x < canvas->width; x++) {
+            for (int y = 0; y < canvas->height; y++) {
+                int index = canvas->channels * (x * canvas->width + y);
+
+                frame.data[index + 0] = canvas->canvas[index + 0];
+                frame.data[index + 1] = canvas->canvas[index + 1];
+                frame.data[index + 2] = canvas->canvas[index + 2];
+                frame.data[index + 3] = canvas->canvas[index + 3];
+            }
+        }
+        oVideoWriter.write(frame);
 
         sfRenderWindow_clear(window, sfBlack);
 
@@ -66,6 +94,7 @@ void render_loop(Canvas *canvas, sfRenderWindow *window)
         sfRenderWindow_display(window);
     }
 
+    oVideoWriter.release();
     sfSprite_destroy(sprite);
     sfTexture_destroy(texture);
     sfRenderWindow_destroy(window);
@@ -113,9 +142,11 @@ int main(int argc, char *argv[])
     // Call render loop here
     render_loop(canvas, window);
 
+    /*
     // Save last render to PPM
     fprintf(stdout, "[main] Saving last render to %s\n", output_fn);
     canvas->save_to_ppm(output_fn);
+    */
 
     // Free memory
     cudaFree(canvas);

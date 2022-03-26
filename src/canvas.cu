@@ -531,6 +531,18 @@ __global__ void render_kernel(Canvas *canvas)
     canvas->canvas[index + 3] = 255;
 }
 
+__global__ void update_kernel(Canvas *canvas, int frame)
+{
+    for (int i = 0; i < canvas->num_renderobjects; i++) {
+        canvas->scene_renderobjects[i]->update(frame);
+    }
+}
+
+void Canvas::update(int frame)
+{
+    update_kernel<<<1, 1>>>(this, frame);
+}
+
 __global__ void scene_setup_kernel(Canvas *canvas)
 {
     // Initialize RenderObjects
@@ -538,7 +550,11 @@ __global__ void scene_setup_kernel(Canvas *canvas)
 
     // Octahedron
     Octahedron *oct = new Octahedron(Vector<float>{0, 1, 0}, 1);
-    oct->extend_list(&renderobjects);
+    oct->set_rotation_update([](int frame) {
+        float update_factor = C_PI / 100.f;
+        return RotationMatrix(update_factor, update_factor, update_factor);
+    });
+    renderobjects.add(oct);
 
     // Spheres
     renderobjects.add(
@@ -581,17 +597,8 @@ __global__ void scene_setup_kernel(Canvas *canvas)
                     cudaMemcpyDeviceToDevice);
     canvas->num_lights = lights.size();
 
-    // Allocate memory for antialiasing
+    // Antialiasing
     canvas->antialiasing_samples = DO_ANTIALIASING ? ANTIALIASING_SAMPLES : 1;
-    canvas->antialiasing_colors_array = (Vector<int> **)malloc(
-        sizeof(Vector<int> *) * canvas->antialiasing_samples * canvas->width * canvas->height);
-    if (canvas->antialiasing_colors_array == NULL) {
-        printf("[scene_setup_kernel] Failed to allocate memory for antialiasing array\n");
-        return;
-    }
-    for (int i = 0; i < canvas->antialiasing_samples; i++) {
-        canvas->antialiasing_colors_array[i] = (Vector<int> *)malloc(sizeof(Vector<int>));
-    }
 }
 
 void Canvas::scene_setup()
@@ -604,7 +611,10 @@ void Canvas::scene_setup()
 void Canvas::host_setup(dim3 grid_size, dim3 block_size)
 {
     // Set heap size to ~67mb
-    cudaDeviceSetLimit(cudaLimitMallocHeapSize, 67108864);
+    //cudaDeviceSetLimit(cudaLimitMallocHeapSize, 67108864);
+    // Set stack size to 2mb
+    cudaDeviceSetLimit(cudaLimitStackSize, 2048);
+
     scene_setup();
     set_kernel_size(grid_size, block_size);
 }

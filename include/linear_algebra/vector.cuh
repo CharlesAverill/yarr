@@ -10,7 +10,7 @@
 
 #include <stdexcept>
 
-#include "cuda_utils.cuh"
+#include "utils/cuda_utils.cuh"
 
 template <typename T> class Vector
 {
