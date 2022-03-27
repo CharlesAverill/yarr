@@ -60,6 +60,7 @@ recent version at the time of writing this (`4.5.5`) so the API will be differen
 tutorials.
 
 ```bash
+cd ~
 OPENCV_VERS="3.4.0"
 wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERS}.zip
 wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/${OPENCV_VERS}.zip
