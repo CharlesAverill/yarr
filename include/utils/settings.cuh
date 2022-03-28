@@ -11,7 +11,7 @@
 // clang-format off
 
 // Framerate
-#define TARGET_FPS 10
+#define TARGET_FPS 60
 
 // Distance determining whether a ray hits a triangle or not
 #define HIT_PRECISION 0.001f

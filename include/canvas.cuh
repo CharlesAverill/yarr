@@ -83,7 +83,7 @@ class Canvas
         init(w, h, c);
     }
 
-    void init(int w, int h, int c)
+    __host__ void init(int w, int h, int c)
     {
         width = w;
         height = h;
