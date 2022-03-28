@@ -1,7 +1,7 @@
 echo "---CLANG-FORMAT----"
 clang-format style=file -i $(find src -name "*.cu") $(find include -name "*.cuh")
 echo "-----CMAKE---------"
-cd ~/CProjects/yarr/build
+cd build
 if cmake .. ; then
     echo "-----MAKE----------"
     if make -j$(nproc) ; then

@@ -53,13 +53,14 @@ We use SFML with C bindings (CSFML) to open a window and display the renders
 [CSFML Bindings](https://www.sfml-dev.org/download/csfml/)
 
 ### OpenCV
-
+<!--
 We need to build a version of OpenCV that includes CUDA functionality. I chose `3.4.0` because
 every other version had compilation issues on my system. This is a major version behind the most
 recent version at the time of writing this (`4.5.5`) so the API will be different than many modern
 tutorials.
 
 ```bash
+cd ~
 OPENCV_VERS="3.4.0"
 wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERS}.zip
 wget -O opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/${OPENCV_VERS}.zip
@@ -90,3 +91,4 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 make -j$(nproc)
 make install
 ```
+-->
